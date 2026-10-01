@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth, ROLE_CONFIGS } from '../store/authContext';
 import {
   LayoutDashboard,
   CloudRain,
@@ -12,24 +13,42 @@ import {
   Settings,
   Activity,
   SendHorizontal,
-  Layers
+  Layers,
+  ShieldAlert,
+  Shield
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-  { name: 'Command Center', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Live Events', path: '/events', icon: CloudRain },
-  { name: 'Reports Explorer', path: '/reports', icon: FileText },
-  { name: 'India Geo-Analytics', path: '/map', icon: Map },
-  { name: 'Analytics & Insights', path: '/analytics', icon: BarChart3 },
-  { name: 'AI Verification', path: '/verification', icon: ShieldCheck },
-  { name: 'Alert Center', path: '/alerts', icon: AlertTriangle },
-  { name: 'Data Sources', path: '/sources', icon: Radio },
-  { name: 'Admin Panel', path: '/admin', icon: Settings },
-  { name: 'System Health', path: '/system', icon: Activity },
-  { name: 'Citizen Report', path: '/report', icon: SendHorizontal },
+interface NavItem {
+  name: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+  allowedRoles?: string[];
+}
+
+const ALL_NAV_ITEMS: NavItem[] = [
+  { name: 'Command Center', path: '/dashboard', icon: LayoutDashboard, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER'] },
+  { name: 'Live Events', path: '/events', icon: CloudRain, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER', 'CITIZEN'] },
+  { name: 'Reports Explorer', path: '/reports', icon: FileText, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER'] },
+  { name: 'India Geo-Analytics', path: '/map', icon: Map, allowedRoles: ['ADMIN', 'ANALYST', 'CITIZEN'] },
+  { name: 'Analytics & Insights', path: '/analytics', icon: BarChart3, allowedRoles: ['ADMIN', 'ANALYST'] },
+  { name: 'AI Verification', path: '/verification', icon: ShieldCheck, allowedRoles: ['ADMIN', 'VERIFIER'] },
+  { name: 'Alert Center', path: '/alerts', icon: AlertTriangle, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER', 'CITIZEN'] },
+  { name: 'Data Sources', path: '/sources', icon: Radio, allowedRoles: ['ADMIN'] },
+  { name: 'Admin Panel', path: '/admin', icon: Settings, allowedRoles: ['ADMIN'] },
+  { name: 'System Health', path: '/system', icon: Activity, allowedRoles: ['ADMIN'] },
+  { name: 'Citizen Report', path: '/report', icon: SendHorizontal, allowedRoles: ['CITIZEN'] },
 ];
 
 export const Sidebar: React.FC<{ isOpen: boolean; onClose?: () => void }> = ({ isOpen, onClose }) => {
+  const { user, role, hasRole } = useAuth();
+  const currentRole = role || 'CITIZEN';
+  const roleConfig = ROLE_CONFIGS[currentRole];
+
+  const visibleNavItems = ALL_NAV_ITEMS.filter((item) => {
+    if (!item.allowedRoles) return true;
+    return item.allowedRoles.includes(currentRole);
+  });
+
   return (
     <aside
       className={`fixed lg:static top-0 left-0 z-40 h-screen w-64 bg-[#0e1626] border-r border-[#1e293b] flex flex-col transition-transform duration-300 ${
@@ -37,26 +56,44 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose?: () => void }> = ({ i
       }`}
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-5 border-b border-[#1e293b] gap-3">
-        <div className="w-9 h-9 rounded-lg bg-sky-600/20 border border-sky-500/30 flex items-center justify-center text-sky-400">
+      <div className="h-16 flex items-center px-4 border-b border-[#1e293b] gap-3">
+        <div className="w-9 h-9 rounded-lg bg-sky-600/20 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
           <Layers className="w-5 h-5" />
         </div>
-        <div>
-          <h1 className="text-sm font-bold tracking-wider text-slate-100 uppercase">
+        <div className="min-w-0">
+          <h1 className="text-sm font-bold tracking-wider text-slate-100 uppercase truncate">
             WeatherPulse
           </h1>
-          <p className="text-[10px] text-sky-400 font-medium tracking-tight">
-            INDIA COMMAND CENTER
+          <p className="text-[10px] text-sky-400 font-medium tracking-tight truncate">
+            INDIA INTELLIGENCE GRID
           </p>
         </div>
       </div>
 
-      {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          Operations & Intelligence
+      {/* Role Banner inside Sidebar */}
+      <div className="px-3 pt-3 pb-1">
+        <div className={`p-2.5 rounded-xl border ${roleConfig?.badgeBg || 'bg-[#121b2d]'} ${roleConfig?.badgeBorder || 'border-[#1e293b]'} flex items-center gap-2`}>
+          <Shield className={`w-4 h-4 shrink-0 ${roleConfig?.badgeColor || 'text-slate-300'}`} />
+          <div className="min-w-0 flex-1">
+            <div className={`text-[10px] font-mono font-bold tracking-wider truncate ${roleConfig?.badgeColor || 'text-slate-300'}`}>
+              {roleConfig?.badge || currentRole}
+            </div>
+            <div className="text-[11px] text-slate-300 font-medium truncate">
+              {roleConfig?.title || 'Operational User'}
+            </div>
+          </div>
         </div>
-        {NAV_ITEMS.map((item) => {
+      </div>
+
+      {/* Navigation Links */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+        <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+          <span>Permitted Modules</span>
+          <span className="font-mono text-sky-400">
+            {visibleNavItems.length}/{ALL_NAV_ITEMS.length}
+          </span>
+        </div>
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
@@ -72,7 +109,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose?: () => void }> = ({ i
               }
             >
               <Icon className="w-4 h-4 shrink-0" />
-              <span>{item.name}</span>
+              <span className="truncate">{item.name}</span>
             </NavLink>
           );
         })}

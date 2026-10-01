@@ -1,5 +1,14 @@
 import os
 import sys
+
+# Ensure both backend directory and project root are in sys.path
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # app
+BACKEND_DIR = os.path.dirname(CURRENT_DIR)               # backend
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)              # root
+for p in [PROJECT_ROOT, BACKEND_DIR]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware

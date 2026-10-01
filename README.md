@@ -112,12 +112,17 @@ The platform includes a built-in SQLite development engine with exact spherical 
    - Backend: `uvicorn app.main:app --app-dir backend --port 8000 --reload`
    - Frontend: `cd frontend && npm run dev`
 
-4. **Access the Interfaces**:
-   - **Command Center Dashboard**: [http://localhost:3000](http://localhost:3000)
+4. **Access the Interfaces & Role-Based Portals**:
+   - **Unified Portal Landing Page**: [http://localhost:5173](http://localhost:5173) (Features platform overview, live metrics, and Role Access & Login section)
    - **Interactive OpenAPI Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
    - **WebSocket Stream**: `ws://localhost:8000/ws/events`
-   - **Default Admin Account**: `admin` / `admin123`
-   - **Default Analyst Account**: `analyst` / `analyst123`
+
+   | Role | Username | Password | Operational Access Scope |
+   | :--- | :--- | :--- | :--- |
+   | **ADMIN** | `admin` | `admin123` | **Whole Portal Access** (All 11 modules: Command Center, Analytics, Verification, System Health, Sources, User Management) |
+   | **ANALYST** | `analyst` | `analyst123` | Command Center, Live Events, Reports Explorer, India GIS Map, 10-Chart Analytics Suite, Alert Center |
+   | **VERIFIER** | `verifier` | `verifier123` | AI Verification Center (Duty officer triage queue, corroboration, audit log), Live Events, Alert Center |
+   | **CITIZEN** | `citizen` | `citizen123` | Citizen Crowd Reporting (GPS auto-detection, photo/video simulator, docket tracking), India GIS Map, Public Alerts |
 
 ---
 

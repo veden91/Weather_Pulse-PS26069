@@ -34,7 +34,7 @@ def seed_database():
                 ("admin", "admin@weatherpulse.gov.in", "Director General (Disaster Operations)", "admin123", UserRole.ADMIN.value, "Ministry of Earth Sciences"),
                 ("analyst", "analyst@weatherpulse.gov.in", "Senior Meteorological Analyst", "analyst123", UserRole.ANALYST.value, "National Weather Intelligence Centre"),
                 ("verifier", "verifier@imd.gov.in", "IMD Duty Verification Officer", "verifier123", UserRole.VERIFIER.value, "IMD Weather Watch Cell"),
-                ("citizen", "citizen@weatherpulse.gov.in", "Verified Volunteer Observer", "citizen123", UserRole.VIEWER.value, "Citizen Weather Network")
+                ("citizen", "citizen@weatherpulse.gov.in", "Verified Volunteer Observer", "citizen123", UserRole.CITIZEN.value, "Citizen Weather Network")
             ]
             for username, email, full_name, pwd, role, dept in users_data:
                 u = User(

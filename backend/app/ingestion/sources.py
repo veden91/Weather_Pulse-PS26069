@@ -1,8 +1,14 @@
 import random
+import asyncio
+import httpx
+import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 from app.ingestion.base import BaseSourceCollector
 from app.geospatial.gazetteer import INDIAN_LOCATIONS
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 REALISTIC_WEATHER_SCENARIOS = [
     {
@@ -236,10 +242,150 @@ class PublicDatasetAdapter(BaseSourceCollector):
             "raw_payload": {"portal": "data.gov.in", "format": "JSON"}
         }]
 
+class LiveOpenWeatherCollector(BaseSourceCollector):
+    def get_source_id(self) -> str:
+        return "LIVE_OPENWEATHER"
+    def get_source_name(self) -> str:
+        return "OpenWeatherMap API"
+    def get_source_type(self) -> str:
+        return "WEATHER_API"
+
+    def collect(self) -> List[Dict[str, Any]]:
+        return []
+
+    async def collect_async(self) -> List[Dict[str, Any]]:
+        if not settings.OPENWEATHER_API_KEY:
+            return []
+        
+        results = []
+        cities = ["Delhi", "Mumbai", "Kolkata", "Chennai", "Bengaluru", "Patna", "Lucknow", "Guwahati"]
+        
+        async with httpx.AsyncClient() as client:
+            for city in cities:
+                try:
+                    res = await client.get(
+                        "https://api.openweathermap.org/data/2.5/weather",
+                        params={"q": f"{city},IN", "appid": settings.OPENWEATHER_API_KEY, "units": "metric"}
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        temp = data.get("main", {}).get("temp", 0)
+                        weather_desc = data.get("weather", [{}])[0].get("description", "")
+                        
+                        cat = "Cloudy"
+                        if "rain" in weather_desc: cat = "Heavy Rainfall"
+                        elif "thunderstorm" in weather_desc: cat = "Thunderstorm"
+                        elif "fog" in weather_desc: cat = "Dense Fog"
+                        elif temp > 40: cat = "Heatwave"
+                        
+                        text = f"Live OpenWeather observation: {weather_desc.capitalize()}, Temperature: {temp}°C."
+                        
+                        results.append({
+                            "source_id": self.get_source_id(),
+                            "source_type": self.get_source_type(),
+                            "text": text,
+                            "city": city,
+                            "state": "Unknown",
+                            "latitude": data.get("coord", {}).get("lat", 0),
+                            "longitude": data.get("coord", {}).get("lon", 0),
+                            "has_media": False,
+                            "raw_payload": data
+                        })
+                except Exception as e:
+                    logger.error(f"OpenWeather API Error for {city}: {e}")
+        return results
+
+class LiveWeatherApiCollector(BaseSourceCollector):
+    def get_source_id(self) -> str:
+        return "LIVE_WEATHERAPI"
+    def get_source_name(self) -> str:
+        return "WeatherAPI.com"
+    def get_source_type(self) -> str:
+        return "WEATHER_API"
+
+    def collect(self) -> List[Dict[str, Any]]:
+        return []
+
+    async def collect_async(self) -> List[Dict[str, Any]]:
+        if not settings.WEATHERAPI_KEY:
+            return []
+        
+        results = []
+        cities = ["Hyderabad", "Ahmedabad", "Pune", "Jaipur", "Kochi"]
+        async with httpx.AsyncClient() as client:
+            for city in cities:
+                try:
+                    res = await client.get(
+                        "http://api.weatherapi.com/v1/current.json",
+                        params={"key": settings.WEATHERAPI_KEY, "q": city}
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        text = f"Live WeatherAPI report: {data['current']['condition']['text']} with {data['current']['precip_mm']}mm precipitation."
+                        results.append({
+                            "source_id": self.get_source_id(),
+                            "source_type": self.get_source_type(),
+                            "text": text,
+                            "city": city,
+                            "state": data.get("location", {}).get("region", "Unknown"),
+                            "latitude": data.get("location", {}).get("lat", 0),
+                            "longitude": data.get("location", {}).get("lon", 0),
+                            "has_media": False,
+                            "raw_payload": data
+                        })
+                except Exception as e:
+                    logger.error(f"WeatherAPI Error for {city}: {e}")
+        return results
+
+class LiveTwitterCollector(BaseSourceCollector):
+    def get_source_id(self) -> str:
+        return "LIVE_TWITTER"
+    def get_source_name(self) -> str:
+        return "Twitter API v2"
+    def get_source_type(self) -> str:
+        return "SOCIAL_MEDIA"
+
+    def collect(self) -> List[Dict[str, Any]]:
+        return []
+
+    async def collect_async(self) -> List[Dict[str, Any]]:
+        if not settings.TWITTER_BEARER_TOKEN:
+            return []
+            
+        results = []
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.get(
+                    "https://api.twitter.com/2/tweets/search/recent",
+                    params={"query": "(#IMD OR #WeatherAlert OR #Cyclone) lang:en -is:retweet", "max_results": 10},
+                    headers={"Authorization": f"Bearer {settings.TWITTER_BEARER_TOKEN}"}
+                )
+                if res.status_code == 200:
+                    data = res.json()
+                    for t in data.get("data", []):
+                        # Use default location as NER will resolve it later in processing
+                        results.append({
+                            "source_id": self.get_source_id(),
+                            "source_type": self.get_source_type(),
+                            "text": t.get("text", ""),
+                            "city": "Unknown",
+                            "state": "Unknown",
+                            "latitude": 20.0,
+                            "longitude": 77.0,
+                            "has_media": False,
+                            "raw_payload": t
+                        })
+        except Exception as e:
+            logger.error(f"Twitter API Error: {e}")
+        return results
+
+
 SOURCES_REGISTRY = {
     "IMD_OPEN_DATA": IMDCollector(),
-    "TWITTER_FEED": SocialMediaAdapter(),
+    "TWITTER_FEED": LiveTwitterCollector() if settings.TWITTER_BEARER_TOKEN else SocialMediaAdapter(),
     "CITIZEN_PORTAL": CitizenPortalAdapter(),
     "GOVT_WEATHER_API": WeatherApiAdapter(),
-    "PUBLIC_DATASET": PublicDatasetAdapter()
+    "PUBLIC_DATASET": PublicDatasetAdapter(),
+    "LIVE_OPENWEATHER": LiveOpenWeatherCollector(),
+    "LIVE_WEATHERAPI": LiveWeatherApiCollector()
 }

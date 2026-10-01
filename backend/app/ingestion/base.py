@@ -21,3 +21,7 @@ class BaseSourceCollector(ABC):
     def collect(self) -> List[Dict[str, Any]]:
         """Collects raw reports from the source"""
         pass
+
+    async def collect_async(self) -> List[Dict[str, Any]]:
+        """Asynchronously collects raw reports. Defaults to sync collect if not overridden."""
+        return self.collect()

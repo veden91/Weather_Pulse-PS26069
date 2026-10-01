@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useSimulator } from '../store/simulatorContext';
+import { useAuth, ROLE_CONFIGS } from '../store/authContext';
 import {
   Menu,
   Search,
@@ -11,20 +12,68 @@ import {
   CheckCircle2,
   AlertTriangle,
   User,
-  ExternalLink
+  ExternalLink,
+  LogOut,
+  Shield,
+  Home,
+  ChevronDown,
+  Loader2
 } from 'lucide-react';
 
 export const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [toastMsg, setToastMsg] = useState<{ text: string; type: 'loading' | 'success' | 'error' } | null>(null);
   const { isSimulating, toggleSimulation, triggerManualPulse, isConnected, latestEvent, liveFeed } = useSimulator();
+  const { user, role, quickLogin, logout, getDefaultRoute } = useAuth();
   const navigate = useNavigate();
+
+  const currentRole = role || 'CITIZEN';
+  const roleConfig = ROLE_CONFIGS[currentRole];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/events?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleSwitchRole = async (targetRole: 'ADMIN' | 'ANALYST' | 'VERIFIER' | 'CITIZEN') => {
+    setRoleMenuOpen(false);
+    try {
+      const newUser = await quickLogin(targetRole);
+      const defaultRoute = ROLE_CONFIGS[newUser.role === 'VIEWER' ? 'CITIZEN' : newUser.role]?.defaultRoute || '/dashboard';
+      navigate(defaultRoute);
+    } catch (err) {
+      console.error('Failed to switch role:', err);
+    }
+  };
+
+  const triggerRealTimeSync = async () => {
+    setToastMsg({ text: 'Connecting to OpenWeather, IMD & Twitter streams...', type: 'loading' });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/v1/sources/sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setToastMsg({ text: `✅ Real-time sync complete: ${data.records_ingested} live records ingested & mapped!`, type: 'success' });
+        setTimeout(() => setToastMsg(null), 5000);
+      } else {
+        setToastMsg({ text: '❌ Failed to sync real-time APIs (Forbidden/Error)', type: 'error' });
+        setTimeout(() => setToastMsg(null), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      setToastMsg({ text: '❌ Error connecting to server', type: 'error' });
+      setTimeout(() => setToastMsg(null), 3000);
     }
   };
 
@@ -44,7 +93,7 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navbar */}
-        <header className="h-16 bg-[#0e1626]/90 backdrop-blur-md border-b border-[#1e293b] sticky top-0 z-20 flex items-center justify-between px-4 lg:px-6 gap-4">
+        <header className="h-16 bg-[#0e1626]/90 backdrop-blur-md border-b border-[#1e293b] sticky top-0 z-20 flex items-center justify-between px-3 sm:px-6 gap-3">
           {/* Mobile hamburger & Title */}
           <div className="flex items-center gap-3">
             <button
@@ -56,62 +105,73 @@ export const DashboardLayout: React.FC = () => {
             </button>
 
             <div className="hidden sm:block">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Ministry of Earth Sciences (MoES)
-              </span>
-              <div className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <span>WeatherPulse India</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono border border-sky-500/30">
-                  SIH 2026
-                </span>
-              </div>
+              {/* Removed Title texts per user request */}
             </div>
           </div>
 
           {/* Search bar */}
-          <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-md mx-2">
+          <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-sm mx-2">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search events, cities (e.g. Lucknow, Patna, Cyclone)..."
+                placeholder="Search events, cities (e.g. Lucknow, Patna)..."
                 className="w-full bg-[#121b2d] border border-[#1e293b] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-500 transition-colors"
               />
             </div>
           </form>
 
           {/* Right Action Bar */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* WebSocket Live Status */}
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#121b2d] border border-[#1e293b] text-[11px] font-mono">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-              <span className="text-slate-300">{isConnected ? 'LIVE WS' : 'CONNECTING'}</span>
-            </div>
+          <div className="flex items-center gap-2 sm:gap-3">
 
-            {/* Quick Trigger Pulse Button */}
-            <button
-              onClick={triggerManualPulse}
-              title="Generate a single live report immediately"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#152033] hover:bg-[#1a2942] border border-[#1e293b] text-xs text-sky-300 transition-all active:scale-95"
-            >
-              <Zap className="w-3.5 h-3.5 text-sky-400" />
-              <span className="hidden sm:inline">Pulse</span>
-            </button>
+            {/* Live Sync Button (Admin Only) */}
+            {currentRole === 'ADMIN' ? (
+              <button
+                onClick={triggerRealTimeSync}
+                disabled={toastMsg?.type === 'loading'}
+                title="Trigger real-time synchronization from all external sources"
+                className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+                  toastMsg?.type === 'loading'
+                    ? 'bg-indigo-600/50 text-indigo-200 border-indigo-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white border-sky-400/50 shadow-[0_0_10px_rgba(56,189,248,0.3)] hover:shadow-[0_0_15px_rgba(56,189,248,0.5)] active:scale-95'
+                }`}
+              >
+                {toastMsg?.type === 'loading' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Zap className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden xl:inline">
+                  {toastMsg?.type === 'loading' ? 'Syncing...' : '⚡ Ingest Real-Time APIs'}
+                </span>
+              </button>
+            ) : (
+              <button
+                onClick={triggerManualPulse}
+                title="Generate a single live report immediately"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#152033] hover:bg-[#1a2942] border border-[#1e293b] text-xs text-sky-300 transition-all active:scale-95"
+              >
+                <Zap className="w-3.5 h-3.5 text-sky-400" />
+                <span className="hidden xl:inline">Pulse</span>
+              </button>
+            )}
 
-            {/* Live Simulation Toggle (Section 9 & Section 47) */}
-            <button
-              onClick={toggleSimulation}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-sm ${
-                isSimulating
-                  ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 animate-pulse'
-                  : 'bg-[#152033] text-slate-300 border-[#1e293b] hover:border-slate-600'
-              }`}
-            >
-              <Radio className={`w-3.5 h-3.5 ${isSimulating ? 'text-emerald-400' : 'text-slate-400'}`} />
-              <span>SIMULATION: {isSimulating ? 'ON' : 'OFF'}</span>
-            </button>
+            {/* Live Simulation Toggle (Admin / Analyst permitted) */}
+            {currentRole !== 'CITIZEN' && (
+              <button
+                onClick={toggleSimulation}
+                className={`hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-sm ${
+                  isSimulating
+                    ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 animate-pulse'
+                    : 'bg-[#152033] text-slate-300 border-[#1e293b] hover:border-slate-600'
+                }`}
+              >
+                <Radio className={`w-3.5 h-3.5 ${isSimulating ? 'text-emerald-400' : 'text-slate-400'}`} />
+                <span>SIM: {isSimulating ? 'ON' : 'OFF'}</span>
+              </button>
+            )}
 
             {/* Notifications Dropdown */}
             <div className="relative">
@@ -161,15 +221,59 @@ export const DashboardLayout: React.FC = () => {
               )}
             </div>
 
-            {/* Duty Officer Profile */}
-            <div className="flex items-center gap-2 pl-2 border-l border-[#1e293b]">
-              <div className="w-8 h-8 rounded-full bg-sky-900/60 border border-sky-500/30 flex items-center justify-center text-sky-300">
-                <User className="w-4 h-4" />
-              </div>
-              <div className="hidden xl:block text-left">
-                <div className="text-xs font-bold text-slate-200">Duty Commander</div>
-                <div className="text-[10px] text-emerald-400 font-mono">MoES OPS ROOM</div>
-              </div>
+            {/* RBAC Role Switcher & User Profile */}
+            <div className="relative pl-2 border-l border-[#1e293b]">
+              <button
+                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#152033] border border-transparent hover:border-[#1e293b] transition-all text-left"
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${roleConfig?.badgeBg || 'bg-sky-900/60'} ${roleConfig?.badgeColor || 'text-sky-300'} border ${roleConfig?.badgeBorder || 'border-sky-500/30'}`}>
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                    <span className="truncate max-w-[120px]">{user?.full_name || user?.username || 'Officer'}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                  <div className={`text-[10px] font-mono font-bold ${roleConfig?.badgeColor || 'text-slate-300'}`}>
+                    {currentRole}
+                  </div>
+                </div>
+              </button>
+
+              {roleMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-[#121b2d] border border-[#1e293b] rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
+                  <div className="px-3 py-2 border-b border-[#1e293b] mb-1">
+                    <div className="text-xs font-bold text-slate-100 truncate">{user?.full_name || 'Active Officer'}</div>
+                    <div className="text-[11px] text-slate-400 truncate">{user?.department || 'MoES Operations'}</div>
+                    <div className={`text-[10px] font-mono mt-1 font-semibold ${roleConfig?.badgeColor}`}>
+                      Current Role: {currentRole}
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between px-2">
+                    <Link
+                      to="/"
+                      onClick={() => setRoleMenuOpen(false)}
+                      className="text-[11px] text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
+                    >
+                      <Home className="w-3.5 h-3.5" />
+                      <span>Landing</span>
+                    </Link>
+
+                    <button
+                      onClick={() => {
+                        setRoleMenuOpen(false);
+                        logout();
+                        navigate('/#login');
+                      }}
+                      className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-medium"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -194,6 +298,21 @@ export const DashboardLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className={`px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-3 backdrop-blur-md ${
+            toastMsg.type === 'loading'
+              ? 'bg-indigo-900/80 border-indigo-500/50 text-indigo-100'
+              : toastMsg.type === 'success'
+              ? 'bg-emerald-900/80 border-emerald-500/50 text-emerald-100'
+              : 'bg-rose-900/80 border-rose-500/50 text-rose-100'
+          }`}>
+            {toastMsg.type === 'loading' && <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />}
+            <span className="text-sm font-medium">{toastMsg.text}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

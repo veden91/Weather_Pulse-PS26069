@@ -88,3 +88,15 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_current_user_profile(current_user: User = Depends(get_current_user)):
     return current_user
+
+def require_roles(allowed_roles: list[str]):
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role == UserRole.ADMIN.value:
+            return current_user  # Admin has access to the whole portal
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation not permitted for role '{current_user.role}'. Required: {allowed_roles}"
+            )
+        return current_user
+    return role_checker

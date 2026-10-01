@@ -118,12 +118,14 @@ export interface DataSource {
   status_label: string;
 }
 
+export type UserRoleType = 'ADMIN' | 'ANALYST' | 'VERIFIER' | 'CITIZEN' | 'VIEWER';
+
 export interface User {
   id: string;
   username: string;
   email: string;
   full_name: string;
-  role: 'ADMIN' | 'ANALYST' | 'VERIFIER' | 'VIEWER';
+  role: UserRoleType;
   department: string;
 }
 

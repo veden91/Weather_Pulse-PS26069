@@ -23,8 +23,9 @@ def main():
     print("=" * 70)
 
     # 0. Clean up stale ports
-    print("\n[0/3] Checking and freeing ports 8000 and 3000...")
+    print("\n[0/3] Checking and freeing ports 8000 and 5173...")
     kill_process_on_port(8000)
+    kill_process_on_port(5173)
     time.sleep(1)
 
     # 1. Verify seed data
@@ -50,7 +51,7 @@ def main():
     time.sleep(3)
 
     # 3. Launch Vite Frontend
-    print("\n[3/3] Launching React Vite Dashboard on http://localhost:3000...")
+    print("\n[3/3] Launching React Vite Dashboard on http://localhost:5173...")
     npm_cmd = "npm.cmd" if os.name == 'nt' else "npm"
     frontend_proc = subprocess.Popen(
         [npm_cmd, "run", "dev"],
@@ -60,10 +61,14 @@ def main():
 
     print("\n" + "=" * 70)
     print("  WeatherPulse India is LIVE!")
-    print("  - Web GIS Dashboard:  http://localhost:3000")
-    print("  - OpenAPI REST Docs:  http://127.0.0.1:8000/docs")
-    print("  - WebSocket Stream:   ws://127.0.0.1:8000/ws/events")
-    print("  - Demo Admin User:    admin / admin123")
+    print("  - Unified Portal & Landing: http://localhost:5173")
+    print("  - OpenAPI REST Docs:        http://127.0.0.1:8000/docs")
+    print("  - WebSocket Stream:         ws://127.0.0.1:8000/ws/events")
+    print("  - RBAC Portals & Demo Logins:")
+    print("    * ADMIN:    admin / admin123")
+    print("    * ANALYST:  analyst / analyst123")
+    print("    * VERIFIER: verifier / verifier123")
+    print("    * CITIZEN:  citizen / citizen123")
     print("  Press Ctrl+C to terminate all services.")
     print("=" * 70 + "\n")
 

@@ -50,6 +50,25 @@ class Settings(BaseSettings):
     SIMULATOR_INTERVAL_SECONDS: float = 4.0
     SIMULATOR_AUTO_START: bool = False
 
+    # External APIs
+    OPENWEATHER_API_KEY: str | None = None
+    WEATHERAPI_KEY: str | None = None
+    DATA_GOV_IN_API_KEY: str | None = None
+    IMD_API_ENDPOINT: str | None = None
+    TWITTER_BEARER_TOKEN: str | None = None
+    TOMORROW_API_KEY: str | None = None
+
+    @property
+    def live_collector_enabled(self) -> bool:
+        return any([
+            self.OPENWEATHER_API_KEY,
+            self.WEATHERAPI_KEY,
+            self.DATA_GOV_IN_API_KEY,
+            self.IMD_API_ENDPOINT,
+            self.TWITTER_BEARER_TOKEN,
+            self.TOMORROW_API_KEY
+        ])
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
