@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAnalyticsOverview, getEvents } from '../services/api';
-import { WeatherEvent, KPICards } from '../types';
+import { getAnalyticsOverview, getEvents, getAlerts } from '../services/api';
+import { WeatherEvent, KPICards, EmergencyAlert } from '../types';
 import { IndiaWeatherMap } from '../maps/IndiaWeatherMap';
 import { EventIntelligencePanel } from '../components/EventIntelligencePanel';
 import { useSimulator } from '../store/simulatorContext';
@@ -22,6 +22,7 @@ import {
 export const CommandCenter: React.FC = () => {
   const [kpis, setKpis] = useState<KPICards | null>(null);
   const [events, setEvents] = useState<WeatherEvent[]>([]);
+  const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<WeatherEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const { latestEvent, liveFeed } = useSimulator();
@@ -29,14 +30,23 @@ export const CommandCenter: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [kpiData, eventsData] = await Promise.all([
+      const [kpiData, eventsData, alertsData] = await Promise.all([
         getAnalyticsOverview(),
         getEvents({ limit: 40 }),
+        getAlerts(),
       ]);
       setKpis(kpiData);
-      setEvents(eventsData);
-      if (eventsData.length > 0 && !selectedEvent) {
-        setSelectedEvent(eventsData[0]);
+
+      // Exclude simulated source events
+      const realEvents = eventsData.filter(
+        (e: any) => e.source_id !== 'SIMULATOR' && e.source_type !== 'SIMULATOR'
+      );
+      const displayEvents = realEvents.length > 0 ? realEvents : eventsData;
+      setEvents(displayEvents);
+      setAlerts(alertsData);
+
+      if (displayEvents.length > 0 && !selectedEvent) {
+        setSelectedEvent(displayEvents[0]);
       }
     } catch (err) {
       console.error('Error loading command center data:', err);
@@ -81,21 +91,6 @@ export const CommandCenter: React.FC = () => {
           <p className="text-xs text-slate-400 mt-0.5">
             Real-time geospatial meteorological intelligence & multi-source telemetry across India.
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/report')}
-            className="px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-md"
-          >
-            <span>+ Submit Citizen Report</span>
-          </button>
-          <button
-            onClick={() => navigate('/verification')}
-            className="px-3.5 py-2 rounded-lg bg-[#152033] hover:bg-[#1e293b] border border-[#1e293b] text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>AI Verification Queue</span>
-          </button>
         </div>
       </div>
 
@@ -244,34 +239,40 @@ export const CommandCenter: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {(liveFeed.length > 0 ? liveFeed.slice(0, 3) : events.slice(0, 3)).map((item, idx) => (
-                <div
-                  key={idx}
-                  className="bg-[#0e1626] p-3 rounded-lg border border-[#1e293b] hover:border-sky-500/50 transition-colors cursor-pointer"
-                  onClick={() => {
-                    const match = events.find((e) => e.id === item.event_id || e.id === item.id);
-                    if (match) setSelectedEvent(match);
-                  }}
-                >
-                  <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="font-bold text-sky-300 truncate">
-                      {item.event_category || item.title}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {item.city}, {item.state}
-                    </span>
+              {(() => {
+                const realLive = liveFeed.filter((i: any) => i.source_id !== 'SIMULATOR' && i.source_type !== 'SIMULATOR');
+                const realEvts = events.filter((e: any) => e.source_id !== 'SIMULATOR' && e.source_type !== 'SIMULATOR');
+                const displayFeed = realLive.length > 0 ? realLive.slice(0, 3) : (realEvts.length > 0 ? realEvts.slice(0, 3) : events.slice(0, 3));
+
+                return displayFeed.map((item: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="bg-[#0e1626] p-3 rounded-lg border border-[#1e293b] hover:border-sky-500/50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      const match = events.find((e) => e.id === item.event_id || e.id === item.id);
+                      if (match) setSelectedEvent(match);
+                    }}
+                  >
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <span className="font-bold text-sky-300 truncate">
+                        {item.event_category || item.title}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {item.city}, {item.state}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 line-clamp-2 mt-1">
+                      {item.text || item.summary}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-[#1e293b]">
+                      <span>Trust: <strong className="text-slate-200">{item.trust_score || 94}%</strong></span>
+                      <span className="text-emerald-400 font-bold font-mono">
+                        {item.verification_status || 'VERIFIED'}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-300 line-clamp-2 mt-1">
-                    {item.text || item.summary}
-                  </p>
-                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-[#1e293b]">
-                    <span>Trust: <strong className="text-slate-200">{item.trust_score || 94}%</strong></span>
-                    <span className="text-emerald-400 font-bold font-mono">
-                      {item.verification_status || 'VERIFIED'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
         </div>
@@ -283,46 +284,53 @@ export const CommandCenter: React.FC = () => {
             onClose={() => setSelectedEvent(null)}
           />
 
-          {/* Quick Active Alerts Card */}
+          {/* Quick Active Alerts Card - Real Dynamic Alerts */}
           <div className="bg-[#121b2d] p-4 rounded-xl border border-[#1e293b] flex-1">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
                 <AlertOctagon className="w-4 h-4 text-red-400" />
-                Critical Weather Advisories
+                Critical Weather Advisories ({alerts.length})
               </span>
               <button
                 onClick={() => navigate('/alerts')}
-                className="text-[11px] text-sky-400 hover:underline"
+                className="text-[11px] text-sky-400 hover:underline font-mono"
               >
                 View All
               </button>
             </div>
-            <div className="space-y-2.5">
-              <div className="bg-red-950/40 border border-red-500/30 p-3 rounded-lg">
-                <div className="flex items-center justify-between text-xs font-bold text-red-300">
-                  <span>Flood Emergency Warning</span>
-                  <span className="text-[10px] font-mono bg-red-500/20 px-1.5 py-0.5 rounded">Patna, Bihar</span>
+            <div className="space-y-2.5 max-h-[320px] overflow-y-auto">
+              {alerts.length === 0 ? (
+                <div className="p-4 text-center text-xs text-slate-400 italic bg-[#0e1626] rounded-lg border border-[#1e293b]">
+                  No active critical advisories at this moment.
                 </div>
-                <p className="text-[11px] text-slate-300 mt-1">
-                  Water level crossed danger mark by 1.2m; disaster relief NDRF teams deployed.
-                </p>
-                <div className="text-[10px] text-red-400 font-mono mt-1.5">
-                  Trend: +38% reports in last 30 minutes
-                </div>
-              </div>
-
-              <div className="bg-orange-950/30 border border-orange-500/30 p-3 rounded-lg">
-                <div className="flex items-center justify-between text-xs font-bold text-orange-300">
-                  <span>Severe Cyclone Approaching</span>
-                  <span className="text-[10px] font-mono bg-orange-500/20 px-1.5 py-0.5 rounded">Visakhapatnam</span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-1">
-                  Deep depression over Bay of Bengal tracking northwest; storm surge warning issued.
-                </p>
-                <div className="text-[10px] text-orange-400 font-mono mt-1.5">
-                  Trend: +24% reports in last 30 minutes
-                </div>
-              </div>
+              ) : (
+                alerts.slice(0, 4).map((alert) => (
+                  <div
+                    key={alert.id}
+                    className={`p-3 rounded-lg border ${
+                      alert.alert_level === 'CRITICAL'
+                        ? 'bg-red-950/40 border-red-500/30'
+                        : alert.alert_level === 'HIGH'
+                        ? 'bg-orange-950/30 border-orange-500/30'
+                        : 'bg-yellow-950/20 border-yellow-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs font-bold text-red-300">
+                      <span className="truncate max-w-[200px]">{alert.title}</span>
+                      <span className="text-[10px] font-mono bg-red-500/20 px-1.5 py-0.5 rounded text-red-200 shrink-0">
+                        {alert.city}, {alert.state}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mt-1 line-clamp-2">
+                      {alert.description}
+                    </p>
+                    <div className="text-[10px] text-red-400 font-mono mt-1.5 flex items-center justify-between">
+                      <span>Trend: {alert.trend_description || '+20% in last 30 minutes'}</span>
+                      <span className="text-slate-400 font-semibold">{alert.report_count} Reports</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

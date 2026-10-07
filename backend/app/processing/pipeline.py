@@ -104,9 +104,9 @@ def process_raw_report(
     )
     trust_score = trust_result["trust_score"]
     verification_status = "PENDING"
-    if trust_score >= 90:
+    if trust_score >= 85:
         verification_status = "VERIFIED"
-    elif trust_score < 40:
+    elif trust_score < 55:
         verification_status = "SUSPICIOUS"
 
     # Stage 8: Event Aggregation

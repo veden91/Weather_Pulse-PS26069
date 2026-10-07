@@ -45,7 +45,7 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-sky-500 selection:text-white flex flex-col relative items-center justify-center">
       {/* Background Image */}
       <div 
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-50"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60"
         style={{ backgroundImage: "url('/india-weather-bg.png')" }}
       />
       

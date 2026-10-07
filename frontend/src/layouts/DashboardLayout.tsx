@@ -3,6 +3,7 @@ import { Outlet, useNavigate, Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useSimulator } from '../store/simulatorContext';
 import { useAuth, ROLE_CONFIGS } from '../store/authContext';
+import { formatIngestionDate, getTimeAgo } from '../utils/dateFormatter';
 import {
   Menu,
   Search,
@@ -17,7 +18,8 @@ import {
   Shield,
   Home,
   ChevronDown,
-  Loader2
+  Loader2,
+  Layers
 } from 'lucide-react';
 
 export const DashboardLayout: React.FC = () => {
@@ -54,7 +56,7 @@ export const DashboardLayout: React.FC = () => {
   const triggerRealTimeSync = async () => {
     setToastMsg({ text: 'Connecting to OpenWeather, IMD & Twitter streams...', type: 'loading' });
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('weatherpulse_token') || localStorage.getItem('token');
       const response = await fetch('http://localhost:8000/api/v1/sources/sync', {
         method: 'POST',
         headers: {
@@ -77,13 +79,15 @@ export const DashboardLayout: React.FC = () => {
     }
   };
 
+  const isCitizen = currentRole === 'CITIZEN';
+
   return (
-    <div className="flex min-h-screen bg-[#0b111e] text-slate-100 antialiased font-sans">
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className={`flex min-h-screen antialiased font-sans ${isCitizen ? 'bg-[#000000] text-zinc-100' : 'bg-[#0b111e] text-slate-100'}`}>
+      {/* Sidebar - hidden for Citizen Portal */}
+      {!isCitizen && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
 
       {/* Backdrop for mobile */}
-      {sidebarOpen && (
+      {!isCitizen && sidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
@@ -93,35 +97,55 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navbar */}
-        <header className="h-16 bg-[#0e1626]/90 backdrop-blur-md border-b border-[#1e293b] sticky top-0 z-20 flex items-center justify-between px-3 sm:px-6 gap-3">
-          {/* Mobile hamburger & Title */}
+        <header className={`h-16 sticky top-0 z-20 flex items-center justify-between px-3 sm:px-6 gap-3 backdrop-blur-md border-b ${
+          isCitizen ? 'bg-[#0a0a0a]/95 border-zinc-800' : 'bg-[#0e1626]/90 border-[#1e293b]'
+        }`}>
+          {/* Brand & Mobile Hamburger */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#152033] lg:hidden"
-              aria-label="Toggle menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+            {!isCitizen ? (
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-lg lg:hidden text-slate-400 hover:text-slate-200 hover:bg-[#152033]"
+                aria-label="Toggle menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            ) : (
+              <Link to="/" className="flex items-center gap-2.5 group">
+                <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-700 flex items-center justify-center text-white">
+                  <Layers className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-xs font-bold tracking-wider uppercase text-white group-hover:text-emerald-400 transition-colors">
+                    WeatherPulse
+                  </h1>
+                  <p className="text-[9px] font-medium tracking-tight text-zinc-400 font-mono">
+                    CITIZEN PORTAL
+                  </p>
+                </div>
+              </Link>
+            )}
 
             <div className="hidden sm:block">
               {/* Removed Title texts per user request */}
             </div>
           </div>
 
-          {/* Search bar */}
-          <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-sm mx-2">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search events, cities (e.g. Lucknow, Patna)..."
-                className="w-full bg-[#121b2d] border border-[#1e293b] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-500 transition-colors"
-              />
-            </div>
-          </form>
+          {/* Search bar (hidden for Citizen Portal) */}
+          {!isCitizen && (
+            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-sm mx-2">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search events, cities (e.g. Lucknow, Patna)..."
+                  className="w-full rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none transition-colors bg-[#121b2d] border border-[#1e293b] text-slate-100 placeholder-slate-400 focus:border-sky-500"
+                />
+              </div>
+            </form>
+          )}
 
           {/* Right Action Bar */}
           <div className="flex items-center gap-2 sm:gap-3">
@@ -147,7 +171,7 @@ export const DashboardLayout: React.FC = () => {
                   {toastMsg?.type === 'loading' ? 'Syncing...' : '⚡ Ingest Real-Time APIs'}
                 </span>
               </button>
-            ) : (
+            ) : currentRole !== 'CITIZEN' ? (
               <button
                 onClick={triggerManualPulse}
                 title="Generate a single live report immediately"
@@ -156,7 +180,7 @@ export const DashboardLayout: React.FC = () => {
                 <Zap className="w-3.5 h-3.5 text-sky-400" />
                 <span className="hidden xl:inline">Pulse</span>
               </button>
-            )}
+            ) : null}
 
             {/* Live Simulation Toggle (Admin / Analyst permitted) */}
             {currentRole !== 'CITIZEN' && (
@@ -173,66 +197,75 @@ export const DashboardLayout: React.FC = () => {
               </button>
             )}
 
-            {/* Notifications Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#152033] border border-transparent hover:border-[#1e293b]"
-                aria-label="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                {liveFeed.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-sky-500 rounded-full animate-ping" />
-                )}
-              </button>
+            {/* Notifications Dropdown (hidden for Citizen Portal) */}
+            {!isCitizen && (
+              <div className="relative">
+                <button
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className="relative p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#152033] border border-transparent hover:border-[#1e293b]"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  {liveFeed.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-sky-500 rounded-full animate-ping" />
+                  )}
+                </button>
 
-              {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#121b2d] border border-[#1e293b] rounded-xl shadow-2xl z-50 overflow-hidden">
-                  <div className="p-3 border-b border-[#1e293b] flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                      Live Ingestion Feed ({liveFeed.length})
-                    </span>
-                    <span className="text-[10px] text-sky-400 font-mono">Auto-Updating</span>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto divide-y divide-[#1e293b]">
-                    {liveFeed.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-slate-400">
-                        No live telemetry yet. Click "Pulse" or turn on "Simulation".
-                      </div>
-                    ) : (
-                      liveFeed.slice(0, 6).map((item, idx) => (
-                        <div key={idx} className="p-3 hover:bg-[#18233a] transition-colors">
-                          <div className="flex items-center justify-between text-[11px] mb-1">
-                            <span className="font-semibold text-sky-300">{item.event_category}</span>
-                            <span className="text-slate-400 font-mono">{item.city}, {item.state}</span>
-                          </div>
-                          <p className="text-xs text-slate-300 line-clamp-2">{item.text}</p>
-                          <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
-                            <span>Trust: {item.trust_score}/100</span>
-                            <span className={`px-1.5 py-0.5 rounded font-mono ${item.verification_status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
-                              {item.verification_status}
-                            </span>
-                          </div>
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#121b2d] border border-[#1e293b] rounded-xl shadow-2xl z-50 overflow-hidden">
+                    <div className="p-3 border-b border-[#1e293b] flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                        Live Ingestion Feed ({liveFeed.length})
+                      </span>
+                      <span className="text-[10px] text-sky-400 font-mono">Auto-Updating</span>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-[#1e293b]">
+                      {liveFeed.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-slate-400">
+                          No live telemetry yet. Click "Pulse" or turn on "Simulation".
                         </div>
-                      ))
-                    )}
+                      ) : (
+                        liveFeed.slice(0, 15).map((item, idx) => (
+                          <div key={idx} className="p-3 hover:bg-[#18233a] transition-colors">
+                            <div className="flex items-center justify-between text-[11px] mb-1">
+                              <span className="font-semibold text-sky-300">{item.event_category}</span>
+                              <span className="text-slate-400 font-mono">{item.city}, {item.state}</span>
+                            </div>
+                            <p className="text-xs text-slate-300 line-clamp-2">{item.text}</p>
+                            <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                              <span className="text-sky-400 flex items-center gap-1">
+                                <span>{formatIngestionDate(item.ingested_at || item.reported_at)}</span>
+                                {item.ingested_at && <span className="text-slate-500">({getTimeAgo(item.ingested_at)})</span>}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded font-mono ${item.verification_status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                                {item.verification_status}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* RBAC Role Switcher & User Profile */}
-            <div className="relative pl-2 border-l border-[#1e293b]">
+            <div className={`relative ${isCitizen ? '' : 'pl-2 border-l border-[#1e293b]'}`}>
               <button
                 onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#152033] border border-transparent hover:border-[#1e293b] transition-all text-left"
+                className={`flex items-center gap-2 p-1.5 rounded-xl transition-all text-left border ${
+                  isCitizen
+                    ? 'hover:bg-zinc-800 border-transparent hover:border-zinc-700'
+                    : 'hover:bg-[#152033] border-transparent hover:border-[#1e293b]'
+                }`}
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${roleConfig?.badgeBg || 'bg-sky-900/60'} ${roleConfig?.badgeColor || 'text-sky-300'} border ${roleConfig?.badgeBorder || 'border-sky-500/30'}`}>
                   <Shield className="w-4 h-4" />
                 </div>
                 <div className="hidden sm:block text-left">
-                  <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                    <span className="truncate max-w-[120px]">{user?.full_name || user?.username || 'Officer'}</span>
+                  <div className={`text-xs font-bold flex items-center gap-1.5 ${isCitizen ? 'text-zinc-100' : 'text-slate-200'}`}>
+                    <span className="truncate max-w-[120px]">{user?.full_name || user?.username || 'Observer'}</span>
                     <ChevronDown className="w-3 h-3 text-slate-400" />
                   </div>
                   <div className={`text-[10px] font-mono font-bold ${roleConfig?.badgeColor || 'text-slate-300'}`}>
@@ -242,19 +275,21 @@ export const DashboardLayout: React.FC = () => {
               </button>
 
               {roleMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-[#121b2d] border border-[#1e293b] rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
-                  <div className="px-3 py-2 border-b border-[#1e293b] mb-1">
-                    <div className="text-xs font-bold text-slate-100 truncate">{user?.full_name || 'Active Officer'}</div>
-                    <div className="text-[11px] text-slate-400 truncate">{user?.department || 'MoES Operations'}</div>
+                <div className={`absolute right-0 mt-2 w-64 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden border ${
+                  isCitizen ? 'bg-[#0a0a0a] border-zinc-800 text-zinc-100' : 'bg-[#121b2d] border-[#1e293b]'
+                }`}>
+                  <div className={`px-3 py-2 border-b mb-1 ${isCitizen ? 'border-zinc-800' : 'border-[#1e293b]'}`}>
+                    <div className={`text-xs font-bold truncate ${isCitizen ? 'text-white' : 'text-slate-100'}`}>{user?.full_name || 'Active Observer'}</div>
+                    <div className={`text-[11px] truncate ${isCitizen ? 'text-zinc-400' : 'text-slate-400'}`}>{user?.department || 'Citizen Observation Grid'}</div>
                     <div className={`text-[10px] font-mono mt-1 font-semibold ${roleConfig?.badgeColor}`}>
                       Current Role: {currentRole}
                     </div>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between px-2">
+                  <div className={`mt-2 pt-2 border-t flex items-center justify-between px-2 ${isCitizen ? 'border-zinc-800' : 'border-[#1e293b]'}`}>
                     <Link
                       to="/"
                       onClick={() => setRoleMenuOpen(false)}
-                      className="text-[11px] text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
+                      className={`text-[11px] flex items-center gap-1 font-medium ${isCitizen ? 'text-zinc-300 hover:text-white' : 'text-sky-400 hover:text-sky-300'}`}
                     >
                       <Home className="w-3.5 h-3.5" />
                       <span>Landing</span>

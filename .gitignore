@@ -1,0 +1,38 @@
+# Environment files
+.env
+.env.*
+backend/.env
+backend/.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Databases
+*.db
+*.sqlite3
+weatherpulse.db
+backend/weatherpulse.db
+
+# Node / Frontend build output & dependencies
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+vite.config.ts.timestamp*
+frontend/vite.config.ts.timestamp*
+
+# System / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Misc
+back_code.md

@@ -5,6 +5,9 @@ import { AuthProvider } from './store/authContext';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
+import { PublicEventExplorer } from './pages/PublicEventExplorer';
+import { PublicAlertCenter } from './pages/PublicAlertCenter';
+import { PublicGeoAnalytics } from './pages/PublicGeoAnalytics';
 import { LoginPage } from './pages/LoginPage';
 import { CommandCenter } from './pages/CommandCenter';
 import { EventExplorer } from './pages/EventExplorer';
@@ -25,25 +28,28 @@ export const App: React.FC = () => {
       <SimulatorProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public Landing Page & Portal Access Section */}
+            {/* Standalone Public Feature Routes (Direct access, no sidebar, no landing page scroll) */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/events" element={<PublicEventExplorer />} />
+            <Route path="/alerts" element={<PublicAlertCenter />} />
+            <Route path="/map" element={<PublicGeoAnalytics />} />
             <Route path="/login" element={<LoginPage />} />
 
-            {/* Protected Portal Operational Routes */}
+            {/* Protected Operational Portal Routes (With DashboardLayout & Sidebar) */}
             <Route element={<DashboardLayout />}>
-              {/* Command Center: ADMIN, ANALYST, VERIFIER */}
+              {/* Command Center: ADMIN, VERIFIER */}
               <Route
                 path="/dashboard"
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'ANALYST', 'VERIFIER']}>
+                  <ProtectedRoute allowedRoles={['ADMIN', 'VERIFIER']}>
                     <CommandCenter />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Live Events: All Roles (ADMIN, ANALYST, VERIFIER, CITIZEN) */}
+              {/* Portal Live Events */}
               <Route
-                path="/events"
+                path="/portal/events"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN', 'ANALYST', 'VERIFIER', 'CITIZEN']}>
                     <EventExplorer />
@@ -69,9 +75,9 @@ export const App: React.FC = () => {
                 }
               />
 
-              {/* India Geo-Analytics Map: ADMIN, ANALYST, CITIZEN */}
+              {/* Portal India Geo-Analytics Map */}
               <Route
-                path="/map"
+                path="/portal/map"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN', 'ANALYST', 'CITIZEN']}>
                     <GeoAnalytics />
@@ -99,9 +105,9 @@ export const App: React.FC = () => {
                 }
               />
 
-              {/* Alert Center: All Roles */}
+              {/* Portal Alert Center */}
               <Route
-                path="/alerts"
+                path="/portal/alerts"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN', 'ANALYST', 'VERIFIER', 'CITIZEN']}>
                     <AlertCenter />
@@ -119,7 +125,7 @@ export const App: React.FC = () => {
                 }
               />
 
-              {/* Platform Admin Panel: ADMIN only */}
+              {/* Admin Panel: ADMIN only */}
               <Route
                 path="/admin"
                 element={
@@ -139,18 +145,18 @@ export const App: React.FC = () => {
                 }
               />
 
-              {/* Citizen Crowd Report Portal: ADMIN, CITIZEN */}
+              {/* Citizen Incident Reporting Form: CITIZEN */}
               <Route
                 path="/report"
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'CITIZEN']}>
+                  <ProtectedRoute allowedRoles={['CITIZEN']}>
                     <CitizenReport />
                   </ProtectedRoute>
                 }
               />
             </Route>
 
-            {/* Fallback */}
+            {/* Fallback Catch-all Route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

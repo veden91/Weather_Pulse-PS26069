@@ -254,7 +254,9 @@ class LiveOpenWeatherCollector(BaseSourceCollector):
         return []
 
     async def collect_async(self) -> List[Dict[str, Any]]:
-        if not settings.OPENWEATHER_API_KEY:
+        import os
+        api_key = os.getenv("OPENWEATHER_API_KEY") or settings.OPENWEATHER_API_KEY
+        if not api_key:
             return []
         
         results = []
@@ -265,7 +267,7 @@ class LiveOpenWeatherCollector(BaseSourceCollector):
                 try:
                     res = await client.get(
                         "https://api.openweathermap.org/data/2.5/weather",
-                        params={"q": f"{city},IN", "appid": settings.OPENWEATHER_API_KEY, "units": "metric"}
+                        params={"q": f"{city},IN", "appid": api_key, "units": "metric"}
                     )
                     if res.status_code == 200:
                         data = res.json()
@@ -278,7 +280,7 @@ class LiveOpenWeatherCollector(BaseSourceCollector):
                         elif "fog" in weather_desc: cat = "Dense Fog"
                         elif temp > 40: cat = "Heatwave"
                         
-                        text = f"Live OpenWeather observation: {weather_desc.capitalize()}, Temperature: {temp}°C."
+                        text = f"Live OpenWeather report: {weather_desc.capitalize()} over {city}, Temp: {temp}°C."
                         
                         results.append({
                             "source_id": self.get_source_id(),
@@ -307,7 +309,9 @@ class LiveWeatherApiCollector(BaseSourceCollector):
         return []
 
     async def collect_async(self) -> List[Dict[str, Any]]:
-        if not settings.WEATHERAPI_KEY:
+        import os
+        api_key = os.getenv("WEATHERAPI_KEY") or settings.WEATHERAPI_KEY
+        if not api_key:
             return []
         
         results = []
@@ -317,7 +321,7 @@ class LiveWeatherApiCollector(BaseSourceCollector):
                 try:
                     res = await client.get(
                         "http://api.weatherapi.com/v1/current.json",
-                        params={"key": settings.WEATHERAPI_KEY, "q": city}
+                        params={"key": api_key, "q": city}
                     )
                     if res.status_code == 200:
                         data = res.json()
@@ -377,6 +381,63 @@ class LiveTwitterCollector(BaseSourceCollector):
                         })
         except Exception as e:
             logger.error(f"Twitter API Error: {e}")
+class LiveOpenMeteoCollector(BaseSourceCollector):
+    def get_source_id(self) -> str:
+        return "LIVE_OPEN_METEO"
+    def get_source_name(self) -> str:
+        return "Open-Meteo Weather API"
+    def get_source_type(self) -> str:
+        return "WEATHER_API"
+
+    def collect(self) -> List[Dict[str, Any]]:
+        return []
+
+    async def collect_async(self) -> List[Dict[str, Any]]:
+        url = settings.OPEN_METEO_API_URL or "https://api.open-meteo.com/v1/forecast"
+        results = []
+        cities = [
+            {"city": "Delhi", "state": "Delhi", "lat": 28.6139, "lon": 77.2090},
+            {"city": "Mumbai", "state": "Maharashtra", "lat": 19.0760, "lon": 72.8777},
+            {"city": "Kolkata", "state": "West Bengal", "lat": 22.5726, "lon": 88.3639},
+            {"city": "Chennai", "state": "Tamil Nadu", "lat": 13.0827, "lon": 80.2707},
+            {"city": "Bengaluru", "state": "Karnataka", "lat": 12.9716, "lon": 77.5946},
+            {"city": "Patna", "state": "Bihar", "lat": 25.5941, "lon": 85.1376},
+            {"city": "Lucknow", "state": "Uttar Pradesh", "lat": 26.8467, "lon": 80.9462},
+            {"city": "Guwahati", "state": "Assam", "lat": 26.1445, "lon": 91.7362}
+        ]
+
+        async with httpx.AsyncClient() as client:
+            for item in cities:
+                try:
+                    params = {
+                        "latitude": item["lat"],
+                        "longitude": item["lon"],
+                        "current_weather": "true",
+                        "hourly": "temperature_2m,precipitation_probability,rain,cloud_cover_high,relative_humidity_2m",
+                        "timezone": "auto"
+                    }
+                    res = await client.get(url, params=params, timeout=8.0)
+                    if res.status_code == 200:
+                        data = res.json()
+                        curr = data.get("current_weather", {})
+                        temp = curr.get("temperature", 0)
+                        wind_speed = curr.get("windspeed", 0)
+
+                        text = f"Live Open-Meteo observation: Temperature: {temp}°C, Wind Speed: {wind_speed} km/h."
+
+                        results.append({
+                            "source_id": self.get_source_id(),
+                            "source_type": self.get_source_type(),
+                            "text": text,
+                            "city": item["city"],
+                            "state": item["state"],
+                            "latitude": item["lat"],
+                            "longitude": item["lon"],
+                            "has_media": False,
+                            "raw_payload": data
+                        })
+                except Exception as e:
+                    logger.error(f"Open-Meteo API Error for {item['city']}: {e}")
         return results
 
 
@@ -387,5 +448,6 @@ SOURCES_REGISTRY = {
     "GOVT_WEATHER_API": WeatherApiAdapter(),
     "PUBLIC_DATASET": PublicDatasetAdapter(),
     "LIVE_OPENWEATHER": LiveOpenWeatherCollector(),
-    "LIVE_WEATHERAPI": LiveWeatherApiCollector()
+    "LIVE_WEATHERAPI": LiveWeatherApiCollector(),
+    "LIVE_OPEN_METEO": LiveOpenMeteoCollector()
 }

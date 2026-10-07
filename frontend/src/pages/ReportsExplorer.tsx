@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getReports } from '../services/api';
 import { WeatherReport } from '../types';
+import { formatIngestionDate, getTimeAgo } from '../utils/dateFormatter';
 import {
   Search,
   Filter,
@@ -158,15 +159,22 @@ export const ReportsExplorer: React.FC = () => {
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-[#1e293b] flex items-center justify-between text-[11px] text-slate-400">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{rep.city}, {rep.state}</span>
-                </span>
-                <div className="flex items-center gap-2">
+              <div className="mt-4 pt-3 border-t border-[#1e293b] flex flex-col gap-1.5 text-[11px] text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{rep.city}, {rep.state}</span>
+                  </span>
                   <span className="font-mono font-semibold text-emerald-400">
                     Trust: {rep.trust_score}/100
                   </span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1 border-t border-[#1e293b]/50">
+                  <span className="flex items-center gap-1 text-sky-300">
+                    <Clock className="w-3 h-3 text-sky-400" />
+                    <span>{formatIngestionDate(rep.ingested_at || rep.reported_at)}</span>
+                  </span>
+                  <span>{getTimeAgo(rep.ingested_at || rep.reported_at)}</span>
                 </div>
               </div>
             </div>

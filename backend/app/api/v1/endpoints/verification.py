@@ -23,7 +23,7 @@ def get_verification_queue(
     if tab == "PENDING_REVIEW":
         query = query.filter(Report.verification_status == "PENDING")
     elif tab == "AI_FLAGGED":
-        query = query.filter(Report.trust_score.between(40, 69))
+        query = query.filter(Report.trust_score < 55)
     elif tab == "SUSPICIOUS":
         query = query.filter(Report.verification_status == "SUSPICIOUS")
     elif tab == "HIGH_IMPACT":

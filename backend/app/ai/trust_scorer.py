@@ -70,18 +70,15 @@ def calculate_trust_score(
     total_score = max(0, min(100, total_score))
 
     # Determine confidence label
-    if total_score >= 90:
+    if total_score >= 85:
         label = "Verified"
-        reason = "Multiple independent authoritative telemetry feeds and geo-verified media confirm this event."
-    elif total_score >= 70:
-        label = "High Confidence"
-        reason = "Authoritative source report with high NLP confidence and consistent location parameters."
-    elif total_score >= 40:
+        reason = "High precision report with authoritative telemetry and confirmed geo-parameters."
+    elif total_score >= 55:
         label = "Needs Review"
-        reason = "Crowdsourced report with moderate credibility; pending additional cross-source confirmation."
+        reason = "Moderate credibility report; pending additional cross-source confirmation."
     else:
         label = "Suspicious"
-        reason = "Low-credibility source or contradictory metadata detected; requires manual analyst verification."
+        reason = "Low trust score (< 55) or contradictory metadata detected; classified as Suspicious."
 
     return {
         "trust_score": total_score,

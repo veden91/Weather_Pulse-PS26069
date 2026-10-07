@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getEvents } from '../services/api';
+import { useAuth } from '../store/authContext';
 import { WeatherEvent } from '../types';
 import { IndiaWeatherMap } from '../maps/IndiaWeatherMap';
 import { EventIntelligencePanel } from '../components/EventIntelligencePanel';
@@ -15,6 +16,9 @@ import {
 } from 'lucide-react';
 
 export const GeoAnalytics: React.FC = () => {
+  const { role, user } = useAuth();
+  const isCitizen = role === 'CITIZEN' || user?.role === 'CITIZEN' || (user?.role as string) === 'VIEWER';
+
   const [events, setEvents] = useState<WeatherEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<WeatherEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<WeatherEvent | null>(null);
@@ -67,38 +71,46 @@ export const GeoAnalytics: React.FC = () => {
   }, [isPlaying]);
 
   return (
-    <div className="space-y-4 h-[calc(100vh-6.5rem)] flex flex-col">
+    <div className="space-y-3 h-[calc(100vh-6.25rem)] flex flex-col overflow-hidden">
       {/* Top Header */}
-      <div className="flex items-center justify-between bg-[#121b2d] px-5 py-3 rounded-xl border border-[#1e293b] shrink-0">
+      <div className={`flex items-center justify-between px-4 py-2.5 rounded-2xl border shrink-0 ${
+        isCitizen ? 'bg-[#080808] border-zinc-800' : 'bg-[#121b2d] border-[#1e293b]'
+      }`}>
         <div>
-          <h1 className="text-base font-bold text-slate-100 flex items-center gap-2">
+          <h1 className={`text-base font-bold flex items-center gap-2 ${isCitizen ? 'text-white' : 'text-slate-100'}`}>
             India Geospatial Weather Analytics & Telemetry Map
-            <span className="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono">
+            <span className={`text-xs px-2 py-0.5 rounded font-mono ${isCitizen ? 'bg-zinc-800 text-white border border-zinc-700' : 'bg-sky-500/20 text-sky-300'}`}>
               {filteredEvents.length} / {events.length} ACTIVE
             </span>
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className={`text-xs ${isCitizen ? 'text-zinc-400' : 'text-slate-400'}`}>
             Interactive multi-layered GIS workspace with spatio-temporal scrubbing & intelligence dossier.
           </p>
         </div>
       </div>
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3.5 min-h-0 overflow-hidden">
         {/* Left Filters Panel (3 cols) */}
-        <div className="lg:col-span-3 bg-[#121b2d] p-4 rounded-xl border border-[#1e293b] flex flex-col gap-4 overflow-y-auto">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2 border-b border-[#1e293b] pb-2">
-            <Filter className="w-4 h-4 text-sky-400" />
+        <div className={`lg:col-span-3 p-4 rounded-2xl border flex flex-col gap-3 overflow-y-auto shrink-0 ${
+          isCitizen ? 'bg-[#080808] border-zinc-800' : 'bg-[#121b2d] border-[#1e293b]'
+        }`}>
+          <div className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2 ${
+            isCitizen ? 'text-white border-zinc-800' : 'text-slate-200 border-[#1e293b]'
+          }`}>
+            <Filter className={`w-4 h-4 ${isCitizen ? 'text-white' : 'text-sky-400'}`} />
             <span>GIS Layer & Spatial Filters</span>
           </div>
 
           <div className="space-y-3 text-xs">
             <div>
-              <label className="text-slate-400 font-medium block mb-1">Weather Category</label>
+              <label className={`font-medium block mb-1 ${isCitizen ? 'text-zinc-400' : 'text-slate-400'}`}>Weather Category</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-[#0e1626] border border-[#1e293b] rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500"
+                className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${
+                  isCitizen ? 'bg-[#000000] border border-zinc-800 text-white focus:border-white' : 'bg-[#0e1626] border border-[#1e293b] text-slate-200 focus:border-sky-500'
+                }`}
               >
                 <option value="">All Weather Events</option>
                 <option value="Heavy Rainfall">Heavy Rainfall</option>
@@ -112,11 +124,13 @@ export const GeoAnalytics: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-slate-400 font-medium block mb-1">Severity Threshold</label>
+              <label className={`font-medium block mb-1 ${isCitizen ? 'text-zinc-400' : 'text-slate-400'}`}>Severity Threshold</label>
               <select
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value)}
-                className="w-full bg-[#0e1626] border border-[#1e293b] rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500"
+                className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${
+                  isCitizen ? 'bg-[#000000] border border-zinc-800 text-white focus:border-white' : 'bg-[#0e1626] border border-[#1e293b] text-slate-200 focus:border-sky-500'
+                }`}
               >
                 <option value="">All Alert Severities</option>
                 <option value="CRITICAL">Critical Only</option>
@@ -127,11 +141,13 @@ export const GeoAnalytics: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-slate-400 font-medium block mb-1">State / UT Region</label>
+              <label className={`font-medium block mb-1 ${isCitizen ? 'text-zinc-400' : 'text-slate-400'}`}>State / UT Region</label>
               <select
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                className="w-full bg-[#0e1626] border border-[#1e293b] rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500"
+                className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${
+                  isCitizen ? 'bg-[#000000] border border-zinc-800 text-white focus:border-white' : 'bg-[#0e1626] border border-[#1e293b] text-slate-200 focus:border-sky-500'
+                }`}
               >
                 <option value="">All Indian States</option>
                 <option value="Uttar Pradesh">Uttar Pradesh</option>
@@ -148,7 +164,7 @@ export const GeoAnalytics: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-auto pt-3 border-t border-[#1e293b]">
+          <div className={`mt-auto pt-3 border-t ${isCitizen ? 'border-zinc-800' : 'border-[#1e293b]'}`}>
             <button
               onClick={() => {
                 setCategory('');
@@ -156,7 +172,9 @@ export const GeoAnalytics: React.FC = () => {
                 setState('');
                 setTimeStep(100);
               }}
-              className="w-full py-2 rounded-lg bg-[#0e1626] hover:bg-[#18233a] border border-[#1e293b] text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5"
+              className={`w-full py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                isCitizen ? 'bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-white' : 'bg-[#0e1626] hover:bg-[#18233a] border border-[#1e293b] text-slate-300'
+              }`}
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset GIS Filters</span>
@@ -164,20 +182,23 @@ export const GeoAnalytics: React.FC = () => {
           </div>
         </div>
 
-        {/* Center Map (6 cols) */}
-        <div className="lg:col-span-6 flex flex-col min-h-0">
-          <div className="flex-1 rounded-xl overflow-hidden shadow-2xl border border-[#1e293b]">
+        {/* Center Map (5 cols) */}
+        <div className="lg:col-span-5 flex flex-col min-h-0 h-full overflow-hidden">
+          <div className={`flex-1 rounded-2xl overflow-hidden shadow-2xl border relative h-full min-h-0 ${
+            isCitizen ? 'border-zinc-800' : 'border-[#1e293b]'
+          }`}>
             <IndiaWeatherMap
               events={filteredEvents}
               selectedEventId={selectedEvent?.id}
               onSelectEvent={(evt) => setSelectedEvent(evt)}
               height="100%"
+              isCitizen={isCitizen}
             />
           </div>
         </div>
 
-        {/* Right Section 57 Intelligence Panel (3 cols) */}
-        <div className="lg:col-span-3 flex flex-col overflow-y-auto">
+        {/* Right Section Intelligence Panel (4 cols) */}
+        <div className="lg:col-span-4 flex flex-col min-h-0 h-full overflow-y-auto">
           <EventIntelligencePanel
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
@@ -185,22 +206,26 @@ export const GeoAnalytics: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Section 23: Spatio-Temporal Timeline Slider */}
-      <div className="bg-[#121b2d] px-5 py-3 rounded-xl border border-[#1e293b] shrink-0 flex flex-col sm:flex-row items-center gap-4">
+      {/* Bottom Section: Spatio-Temporal Timeline Slider */}
+      <div className={`px-5 py-3 rounded-2xl border shrink-0 flex flex-col sm:flex-row items-center gap-4 ${
+        isCitizen ? 'bg-[#080808] border-zinc-800' : 'bg-[#121b2d] border-[#1e293b]'
+      }`}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="w-8 h-8 rounded-lg bg-sky-600 hover:bg-sky-500 text-white flex items-center justify-center transition-colors shadow-md"
+            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors shadow-md ${
+              isCitizen ? 'bg-white text-black hover:bg-zinc-200' : 'bg-sky-600 hover:bg-sky-500 text-white'
+            }`}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
           </button>
-          <div className="text-xs font-semibold text-slate-200 whitespace-nowrap">
+          <div className={`text-xs font-semibold whitespace-nowrap ${isCitizen ? 'text-white' : 'text-slate-200'}`}>
             Timeline Scrubber:
           </div>
         </div>
 
         <div className="flex-1 w-full flex items-center gap-3">
-          <span className="text-[11px] font-mono text-slate-400">T - 24 Hours</span>
+          <span className={`text-[11px] font-mono ${isCitizen ? 'text-zinc-400' : 'text-slate-400'}`}>T - 24 Hours</span>
           <input
             type="range"
             min={10}
@@ -208,12 +233,12 @@ export const GeoAnalytics: React.FC = () => {
             step={10}
             value={timeStep}
             onChange={(e) => setTimeStep(Number(e.target.value))}
-            className="w-full accent-sky-500 cursor-pointer h-1.5 bg-[#0e1626] rounded-lg"
+            className={`w-full cursor-pointer h-1.5 rounded-lg ${isCitizen ? 'accent-white bg-[#000000]' : 'accent-sky-500 bg-[#0e1626]'}`}
           />
           <span className="text-[11px] font-mono text-emerald-400 font-bold">Live (Now)</span>
         </div>
 
-        <div className="text-xs font-mono text-slate-400 whitespace-nowrap">
+        <div className={`text-xs font-mono whitespace-nowrap ${isCitizen ? 'text-zinc-400' : 'text-slate-400'}`}>
           {filteredEvents.length} clusters in window
         </div>
       </div>

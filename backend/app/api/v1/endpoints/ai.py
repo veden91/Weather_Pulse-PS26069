@@ -7,6 +7,7 @@ from app.ai.trust_scorer import calculate_trust_score
 from app.ai.deduplicator import find_matching_event
 from app.geospatial.haversine import haversine_distance_km
 from app.models.event import Event
+from app.ai.llm_verifier import verify_report_with_llm
 from app.schemas.ai import (
     ClassifyRequest, ClassifyResponse, TrustScoreRequest,
     TrustScoreResponse, DeduplicateRequest, DeduplicateResponse,
@@ -78,3 +79,8 @@ def deduplicate_event(req: DeduplicateRequest, db: Session = Depends(get_db)):
         matched_event=None,
         candidate_matches=[]
     )
+
+@router.post("/llm-verify")
+def llm_verify_report(req: ClassifyRequest):
+    return verify_report_with_llm(text=req.text, location_hint=req.location_hint)
+

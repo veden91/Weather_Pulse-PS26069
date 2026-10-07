@@ -72,3 +72,9 @@ body {
   color: #f8fafc !important;
   border-color: #1e293b !important;
 }
+
+.leaflet-div-icon,
+.custom-weather-marker {
+  background: transparent !important;
+  border: none !important;
+}

@@ -51,12 +51,14 @@ class Settings(BaseSettings):
     SIMULATOR_AUTO_START: bool = False
 
     # External APIs
+    GEMINI_API_KEY: str | None = None
     OPENWEATHER_API_KEY: str | None = None
     WEATHERAPI_KEY: str | None = None
     DATA_GOV_IN_API_KEY: str | None = None
     IMD_API_ENDPOINT: str | None = None
     TWITTER_BEARER_TOKEN: str | None = None
     TOMORROW_API_KEY: str | None = None
+    OPEN_METEO_API_URL: str | None = "https://api.open-meteo.com/v1/forecast"
 
     @property
     def live_collector_enabled(self) -> bool:
@@ -66,7 +68,8 @@ class Settings(BaseSettings):
             self.DATA_GOV_IN_API_KEY,
             self.IMD_API_ENDPOINT,
             self.TWITTER_BEARER_TOKEN,
-            self.TOMORROW_API_KEY
+            self.TOMORROW_API_KEY,
+            self.OPEN_METEO_API_URL
         ])
 
     model_config = SettingsConfigDict(
