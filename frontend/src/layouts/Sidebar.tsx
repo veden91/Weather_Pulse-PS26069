@@ -27,12 +27,12 @@ interface NavItem {
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { name: 'Command Center', path: '/dashboard', icon: LayoutDashboard, allowedRoles: ['ADMIN', 'VERIFIER'] },
-  { name: 'Live Events', path: '/events', icon: CloudRain, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER'] },
+  { name: 'Live Events', path: '/portal/events', icon: CloudRain, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER'] },
   { name: 'Reports Explorer', path: '/reports', icon: FileText, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER'] },
-  { name: 'India Geo-Analytics', path: '/map', icon: Map, allowedRoles: ['ADMIN', 'ANALYST'] },
+  { name: 'India Geo-Analytics', path: '/portal/map', icon: Map, allowedRoles: ['ADMIN', 'ANALYST'] },
   { name: 'Analytics & Insights', path: '/analytics', icon: BarChart3, allowedRoles: ['ADMIN', 'ANALYST'] },
   { name: 'AI Verification', path: '/verification', icon: ShieldCheck, allowedRoles: ['ADMIN', 'VERIFIER'] },
-  { name: 'Alert Center', path: '/alerts', icon: AlertTriangle, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER'] },
+  { name: 'Alert Center', path: '/portal/alerts', icon: AlertTriangle, allowedRoles: ['ADMIN', 'ANALYST', 'VERIFIER'] },
   { name: 'Data Sources', path: '/sources', icon: Radio, allowedRoles: ['ADMIN'] },
   { name: 'Admin Panel', path: '/admin', icon: Settings, allowedRoles: ['ADMIN'] },
   { name: 'System Health', path: '/system', icon: Activity, allowedRoles: ['ADMIN'] },

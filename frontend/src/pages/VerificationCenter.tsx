@@ -12,7 +12,9 @@ import {
   Flame,
   Radio,
   ExternalLink,
-  MapPin
+  MapPin,
+  Camera,
+  Video
 } from 'lucide-react';
 
 const TABS = [
@@ -188,6 +190,52 @@ export const VerificationCenter: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Visual Evidence Corroboration */}
+              {report.media && report.media.length > 0 && (
+                <div className="bg-[#0e1626] p-3.5 rounded-lg border border-[#1e293b] space-y-2">
+                  <div className="text-[10px] text-sky-400 uppercase font-semibold flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-sky-400" />
+                      Visual Evidence Corroboration ({report.media.length})
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold">+15 Trust Score Visual Corroboration</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 pt-1">
+                    {report.media.map((item, idx) => (
+                      <div key={idx} className="rounded-lg overflow-hidden border border-[#1e293b] bg-black/60 relative group">
+                        {item.media_type === 'VIDEO' || item.media_url.startsWith('data:video') || item.media_url.match(/\.(mp4|webm|mov)($|\?)/i) ? (
+                          <div className="w-60">
+                            <video src={item.media_url} controls className="w-full h-36 object-cover bg-black rounded-t-lg" />
+                            <div className="p-1.5 text-[10px] text-slate-300 font-mono bg-[#0b111e] flex items-center justify-between">
+                              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                                <Video className="w-3 h-3" /> Video Evidence
+                              </span>
+                              <a href={item.media_url} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
+                                Full view
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-52">
+                            <a href={item.media_url} target="_blank" rel="noreferrer" className="block relative">
+                              <img src={item.media_url} alt={item.caption || "Citizen photo"} className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300" />
+                              <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 text-[9px] font-mono text-white flex items-center gap-0.5">
+                                <ExternalLink className="w-2.5 h-2.5" /> Full
+                              </div>
+                            </a>
+                            {item.caption && (
+                              <p className="p-1.5 text-[10px] text-slate-300 font-sans truncate bg-[#0b111e]">
+                                {item.caption}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons (Section 26 & 30) */}
               <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-[#1e293b]">

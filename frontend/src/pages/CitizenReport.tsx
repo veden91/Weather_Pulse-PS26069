@@ -99,6 +99,7 @@ export const CitizenReport: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    const isVideo = mediaType === 'video' || (photoUrl && (photoUrl.startsWith('data:video') || Boolean(photoUrl.match(/\.(mp4|webm|mov|ogg)($|\?)/i))));
     try {
       const res = await submitCitizenReport({
         event_category: category,
@@ -108,7 +109,8 @@ export const CitizenReport: React.FC = () => {
         state: state || undefined,
         latitude: lat,
         longitude: lon,
-        photo_url: photoUrl || undefined,
+        photo_url: !isVideo ? (photoUrl || undefined) : undefined,
+        video_url: isVideo ? (photoUrl || undefined) : undefined,
       });
       setReceipt(res);
     } catch (err) {

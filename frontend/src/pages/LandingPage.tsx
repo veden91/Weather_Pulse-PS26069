@@ -18,7 +18,7 @@ export const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-sky-500 selection:text-white flex flex-col relative overflow-x-hidden">
       {/* Background Image */}
       <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40 pointer-events-none"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-70 pointer-events-none"
         style={{ backgroundImage: "url('/india-weather-bg.png')" }}
       />
 
@@ -49,7 +49,7 @@ export const LandingPage: React.FC = () => {
         </h1>
 
         <p className="mt-8 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Welcome to the National Meteorological Intelligence & Citizen Early Warning Grid.
+          Welcome to the "National Meteorological Intelligence & Citizen Early Warning"
           Advanced weather tracking, precision forecasting, and secure data portals for administrators, analysts, and citizens.
         </p>
       </section>

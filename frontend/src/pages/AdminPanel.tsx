@@ -13,7 +13,12 @@ import {
   MapPin,
   Filter,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Camera,
+  Video,
+  ExternalLink,
+  X,
+  Eye
 } from 'lucide-react';
 import { getReports } from '../services/api';
 import { WeatherReport } from '../types';
@@ -21,6 +26,7 @@ import { formatIngestionDate, getTimeAgo, getTimeClassification } from '../utils
 
 export const AdminPanel: React.FC = () => {
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'loading' | 'success' | 'error' } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<WeatherReport | null>(null);
 
   const [users, setUsers] = useState([
     { id: 1, name: 'Dr. M. Ravichandran', role: 'ADMIN', dept: 'Ministry of Earth Sciences (MoES)', username: 'admin', email: 'admin@weatherpulse.gov.in', status: 'ACTIVE' },
@@ -33,13 +39,14 @@ export const AdminPanel: React.FC = () => {
   const [reports, setReports] = useState<WeatherReport[]>([]);
   const [loadingReports, setLoadingReports] = useState<boolean>(true);
   const [timeFilter, setTimeFilter] = useState<'ALL' | 'JUST_INGESTED' | 'LAST_1H' | 'TODAY'>('ALL');
+  const [evidenceFilter, setEvidenceFilter] = useState<'ALL' | 'WITH_MEDIA' | 'CITIZEN_ONLY'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'NEWEST' | 'OLDEST'>('NEWEST');
 
   const fetchIngestedReports = async () => {
     setLoadingReports(true);
     try {
-      const data = await getReports({ limit: 100 });
+      const data = await getReports({ limit: 300 });
       setReports(data);
     } catch (err) {
       console.error('Failed to fetch reports for admin panel:', err);
@@ -70,7 +77,7 @@ export const AdminPanel: React.FC = () => {
     }, 1000);
   };
 
-  // Helper calculation for Time Buckets
+  // Helper calculation for Time Buckets & Evidence
   const now = new Date();
 
   const justIngestedCount = reports.filter(r => {
@@ -88,6 +95,9 @@ export const AdminPanel: React.FC = () => {
     return d.toDateString() === now.toDateString();
   }).length;
 
+  const withMediaCount = reports.filter(r => r.media && r.media.length > 0).length;
+  const citizenReportsCount = reports.filter(r => r.source_id === 'CITIZEN_PORTAL').length;
+
   // Filtered and Sorted Reports
   const filteredReports = reports.filter(r => {
     const d = new Date(r.ingested_at || r.reported_at);
@@ -97,6 +107,13 @@ export const AdminPanel: React.FC = () => {
     if (timeFilter === 'JUST_INGESTED') passesTime = diffMin <= 15;
     else if (timeFilter === 'LAST_1H') passesTime = diffMin <= 60;
     else if (timeFilter === 'TODAY') passesTime = d.toDateString() === now.toDateString();
+
+    let passesEvidence = true;
+    if (evidenceFilter === 'WITH_MEDIA') {
+      passesEvidence = Boolean(r.media && r.media.length > 0);
+    } else if (evidenceFilter === 'CITIZEN_ONLY') {
+      passesEvidence = r.source_id === 'CITIZEN_PORTAL';
+    }
 
     let passesSearch = true;
     if (searchQuery.trim()) {
@@ -110,7 +127,7 @@ export const AdminPanel: React.FC = () => {
         r.text.toLowerCase().includes(q);
     }
 
-    return passesTime && passesSearch;
+    return passesTime && passesEvidence && passesSearch;
   }).sort((a, b) => {
     const dateA = new Date(a.ingested_at || a.reported_at).getTime();
     const dateB = new Date(b.ingested_at || b.reported_at).getTime();
@@ -160,9 +177,9 @@ export const AdminPanel: React.FC = () => {
         </div>
 
         {/* Time Bucket Classification Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div
-            onClick={() => setTimeFilter('JUST_INGESTED')}
+            onClick={() => { setTimeFilter('JUST_INGESTED'); setEvidenceFilter('ALL'); }}
             className={`p-3 rounded-xl border cursor-pointer transition-all ${
               timeFilter === 'JUST_INGESTED'
                 ? 'bg-emerald-950/40 border-emerald-500/60 ring-1 ring-emerald-500/40'
@@ -176,11 +193,11 @@ export const AdminPanel: React.FC = () => {
             <div className="text-xl font-bold text-emerald-300 font-mono mt-1">
               {justIngestedCount}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Within last 15 mins</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">&lt; 15 mins</div>
           </div>
 
           <div
-            onClick={() => setTimeFilter('LAST_1H')}
+            onClick={() => { setTimeFilter('LAST_1H'); setEvidenceFilter('ALL'); }}
             className={`p-3 rounded-xl border cursor-pointer transition-all ${
               timeFilter === 'LAST_1H'
                 ? 'bg-sky-950/40 border-sky-500/60 ring-1 ring-sky-500/40'
@@ -194,11 +211,11 @@ export const AdminPanel: React.FC = () => {
             <div className="text-xl font-bold text-sky-300 font-mono mt-1">
               {last1hCount}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Ingested within 60 mins</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">&lt; 60 mins</div>
           </div>
 
           <div
-            onClick={() => setTimeFilter('TODAY')}
+            onClick={() => { setTimeFilter('TODAY'); setEvidenceFilter('ALL'); }}
             className={`p-3 rounded-xl border cursor-pointer transition-all ${
               timeFilter === 'TODAY'
                 ? 'bg-indigo-950/40 border-indigo-500/60 ring-1 ring-indigo-500/40'
@@ -212,25 +229,43 @@ export const AdminPanel: React.FC = () => {
             <div className="text-xl font-bold text-indigo-300 font-mono mt-1">
               {todayCount}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Same calendar date</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Today's reports</div>
           </div>
 
           <div
-            onClick={() => setTimeFilter('ALL')}
+            onClick={() => setEvidenceFilter(evidenceFilter === 'WITH_MEDIA' ? 'ALL' : 'WITH_MEDIA')}
             className={`p-3 rounded-xl border cursor-pointer transition-all ${
-              timeFilter === 'ALL'
+              evidenceFilter === 'WITH_MEDIA'
+                ? 'bg-amber-950/50 border-amber-500/70 ring-1 ring-amber-500/50'
+                : 'bg-[#0e1626] border-[#1e293b] hover:border-slate-600'
+            }`}
+          >
+            <div className="text-[10px] text-amber-400 uppercase font-bold flex items-center justify-between">
+              <span>📷 Visual Media</span>
+              <Camera className="w-3.5 h-3.5" />
+            </div>
+            <div className="text-xl font-bold text-amber-300 font-mono mt-1">
+              {withMediaCount}
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Photos & Videos</div>
+          </div>
+
+          <div
+            onClick={() => { setTimeFilter('ALL'); setEvidenceFilter('ALL'); }}
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${
+              timeFilter === 'ALL' && evidenceFilter === 'ALL'
                 ? 'bg-purple-950/40 border-purple-500/60 ring-1 ring-purple-500/40'
                 : 'bg-[#0e1626] border-[#1e293b] hover:border-slate-600'
             }`}
           >
             <div className="text-[10px] text-purple-400 uppercase font-bold flex items-center justify-between">
-              <span>📜 Total Ingestion Log</span>
+              <span>📜 Total Log</span>
               <FileText className="w-3.5 h-3.5" />
             </div>
             <div className="text-xl font-bold text-purple-300 font-mono mt-1">
               {reports.length}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">All ingested records</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">All telemetry records</div>
           </div>
         </div>
 
@@ -249,14 +284,24 @@ export const AdminPanel: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <select
+              value={evidenceFilter}
+              onChange={(e) => setEvidenceFilter(e.target.value as any)}
+              className="bg-[#0e1626] border border-[#1e293b] rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+            >
+              <option value="ALL">All Evidence & Sources</option>
+              <option value="WITH_MEDIA">📷 Visual Evidence Attached ({withMediaCount})</option>
+              <option value="CITIZEN_ONLY">👤 Citizen Portal Reports ({citizenReportsCount})</option>
+            </select>
+
+            <select
               value={timeFilter}
               onChange={(e) => setTimeFilter(e.target.value as any)}
               className="bg-[#0e1626] border border-[#1e293b] rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
             >
-              <option value="ALL">Filter: All Time</option>
-              <option value="JUST_INGESTED">Filter: Just Ingested (&lt; 15 mins)</option>
-              <option value="LAST_1H">Filter: Last 1 Hour</option>
-              <option value="TODAY">Filter: Ingested Today</option>
+              <option value="ALL">Time: All Time</option>
+              <option value="JUST_INGESTED">Time: &lt; 15 mins</option>
+              <option value="LAST_1H">Time: &lt; 1 Hour</option>
+              <option value="TODAY">Time: Ingested Today</option>
             </select>
 
             <select
@@ -264,8 +309,8 @@ export const AdminPanel: React.FC = () => {
               onChange={(e) => setSortOrder(e.target.value as any)}
               className="bg-[#0e1626] border border-[#1e293b] rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
             >
-              <option value="NEWEST">Sort: Ingested Date (Newest First)</option>
-              <option value="OLDEST">Sort: Ingested Date (Oldest First)</option>
+              <option value="NEWEST">Sort: Newest First</option>
+              <option value="OLDEST">Sort: Oldest First</option>
             </select>
           </div>
         </div>
@@ -278,6 +323,7 @@ export const AdminPanel: React.FC = () => {
                 <th className="py-3 px-4">Report ID & Source</th>
                 <th className="py-3 px-4">Weather Category</th>
                 <th className="py-3 px-4">Location</th>
+                <th className="py-3 px-4 text-center">Visual Evidence</th>
                 <th className="py-3 px-4">Exact Ingestion Date & Time</th>
                 <th className="py-3 px-4">Time Elapsed</th>
                 <th className="py-3 px-4">Time Classification</th>
@@ -287,14 +333,14 @@ export const AdminPanel: React.FC = () => {
             <tbody className="divide-y divide-[#1e293b]">
               {loadingReports ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400 font-mono">
+                  <td colSpan={8} className="py-8 text-center text-slate-400 font-mono">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-sky-400" />
                     Loading ingested telemetry reports...
                   </td>
                 </tr>
               ) : filteredReports.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                  <td colSpan={8} className="py-8 text-center text-slate-400">
                     No reports match the selected date & time criteria.
                   </td>
                 </tr>
@@ -305,9 +351,13 @@ export const AdminPanel: React.FC = () => {
                   const timeAgo = getTimeAgo(report.ingested_at || report.reported_at);
 
                   return (
-                    <tr key={report.id} className="hover:bg-[#18233a] transition-colors">
+                    <tr
+                      key={report.id}
+                      onClick={() => setSelectedReport(report)}
+                      className="hover:bg-[#18233a] transition-colors cursor-pointer group/row"
+                    >
                       <td className="py-3 px-4">
-                        <div className="font-mono font-bold text-sky-300">{report.id}</div>
+                        <div className="font-mono font-bold text-sky-300 group-hover/row:text-sky-200">{report.id}</div>
                         <div className="text-[10px] text-slate-400 font-mono uppercase">{report.source_id}</div>
                       </td>
 
@@ -328,6 +378,24 @@ export const AdminPanel: React.FC = () => {
                           <MapPin className="w-3 h-3 text-slate-400" />
                           <span>{report.city}, {report.state}</span>
                         </div>
+                      </td>
+
+                      <td className="py-3 px-4 text-center">
+                        {report.media && report.media.length > 0 ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedReport(report);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/20 hover:bg-sky-500/35 border border-sky-500/40 text-sky-300 font-mono text-[10px] font-bold transition-all shadow-sm group/btn"
+                            title="View attached citizen photos and videos"
+                          >
+                            <Camera className="w-3 h-3 text-sky-400 group-hover/btn:scale-110 transition-transform" />
+                            <span>{report.media.length} Media</span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-500 text-[10px] font-mono">Text only</span>
+                        )}
                       </td>
 
                       <td className="py-3 px-4 font-mono font-bold text-slate-100">
@@ -446,6 +514,134 @@ export const AdminPanel: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Report Dossier & Media Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-sky-400">{selectedReport.id}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-[#0e1626] border border-[#1e293b] font-mono text-slate-300">
+                    Source: {selectedReport.source_id}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-slate-100 mt-0.5">{selectedReport.event_category}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#1e293b] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="bg-[#0e1626] p-3.5 rounded-lg border border-[#1e293b]">
+                <div className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Raw Report Content</div>
+                <div className="text-slate-200 leading-relaxed font-sans">{selectedReport.text}</div>
+              </div>
+
+              {/* Visual Evidence Photos / Videos */}
+              {selectedReport.media && selectedReport.media.length > 0 ? (
+                <div className="bg-[#0e1626] p-3.5 rounded-lg border border-[#1e293b] space-y-2">
+                  <div className="text-[10px] text-sky-400 uppercase font-semibold flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-sky-400" />
+                      Attached Visual Evidence ({selectedReport.media.length})
+                    </span>
+                    <span className="text-emerald-400 font-mono text-[10px]">Visual Corroboration Active</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    {selectedReport.media.map((item, idx) => (
+                      <div key={idx} className="rounded-lg overflow-hidden border border-[#1e293b] bg-black/60 group/media relative">
+                        {item.media_type === 'VIDEO' || item.media_url.startsWith('data:video') || item.media_url.match(/\.(mp4|webm|mov)($|\?)/i) ? (
+                          <div className="space-y-1">
+                            <video
+                              src={item.media_url}
+                              controls
+                              className="w-full h-48 object-cover rounded-t-lg bg-black"
+                            />
+                            <div className="p-2 flex items-center justify-between text-[11px] text-slate-300 font-sans bg-[#0b111e]">
+                              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                                <Video className="w-3.5 h-3.5" /> Video Capture
+                              </span>
+                              <a
+                                href={item.media_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-sky-400 hover:underline flex items-center gap-0.5 text-[10px]"
+                              >
+                                Full view
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <a
+                              href={item.media_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block overflow-hidden relative cursor-pointer"
+                            >
+                              <img
+                                src={item.media_url}
+                                alt={item.caption || "Citizen weather photo"}
+                                className="w-full h-48 object-cover group-hover/media:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-[10px] font-mono text-white flex items-center gap-1">
+                                <ExternalLink className="w-3 h-3" /> Open Full
+                              </div>
+                            </a>
+                            {item.caption && (
+                              <p className="p-2 text-[10px] text-slate-300 font-sans truncate bg-[#0b111e]">
+                                {item.caption}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-[#0e1626] p-3 rounded-lg border border-[#1e293b] text-slate-400 text-xs italic">
+                  No visual media attached for this telemetry report.
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#0e1626] p-3 rounded-lg border border-[#1e293b]">
+                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Location Coordinates</div>
+                  <div className="font-bold text-slate-200 mt-0.5">{selectedReport.city}, {selectedReport.state}</div>
+                  <div className="text-[10px] font-mono text-slate-400 mt-1">
+                    {selectedReport.latitude.toFixed(4)}, {selectedReport.longitude.toFixed(4)}
+                  </div>
+                </div>
+
+                <div className="bg-[#0e1626] p-3 rounded-lg border border-[#1e293b]">
+                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Verification & Trust</div>
+                  <div className="font-bold text-emerald-400 mt-0.5">Trust Score: {selectedReport.trust_score}/100</div>
+                  <div className="text-[10px] font-mono text-slate-300 mt-1 uppercase">
+                    Status: {selectedReport.verification_status}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="px-4 py-2 rounded-lg bg-[#1e293b] hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
+              >
+                Close Dossier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {toastMsg && (
