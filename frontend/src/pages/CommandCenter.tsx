@@ -16,7 +16,8 @@ import {
   Activity,
   ArrowUpRight,
   TrendingUp,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 
 export const CommandCenter: React.FC = () => {
@@ -57,6 +58,10 @@ export const CommandCenter: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(() => {
+      fetchData();
+    }, 15000); // Auto-refresh telemetry & events from PostgreSQL every 15s
+    return () => clearInterval(interval);
   }, []);
 
   // Update dynamic counters and map markers when live simulation arrives
@@ -91,6 +96,16 @@ export const CommandCenter: React.FC = () => {
           <p className="text-xs text-slate-400 mt-0.5">
             Real-time geospatial meteorological intelligence & multi-source telemetry across India.
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchData()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0e1626] border border-[#1e293b] hover:border-sky-500/50 text-slate-300 hover:text-sky-300 text-xs font-mono transition-all shadow-sm"
+            title="Force refresh data directly from PostgreSQL"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${loading ? 'animate-spin' : ''}`} />
+            <span>Sync DB</span>
+          </button>
         </div>
       </div>
 

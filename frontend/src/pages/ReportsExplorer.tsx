@@ -16,7 +16,8 @@ import {
   ShieldAlert,
   Camera,
   Video,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 
 export const ReportsExplorer: React.FC = () => {
@@ -51,6 +52,10 @@ export const ReportsExplorer: React.FC = () => {
 
   useEffect(() => {
     fetchReports();
+    const interval = setInterval(() => {
+      fetchReports();
+    }, 15000); // Auto-refresh reports stream from PostgreSQL every 15s
+    return () => clearInterval(interval);
   }, [statusFilter, sourceFilter]);
 
   const exportCSV = () => {
@@ -72,13 +77,23 @@ export const ReportsExplorer: React.FC = () => {
             Individual telemetry, social posts, sensor readings, and citizen crowd reports ingested across India.
           </p>
         </div>
-        <button
-          onClick={exportCSV}
-          className="px-3.5 py-1.5 rounded-lg bg-[#152033] hover:bg-[#1e293b] border border-[#1e293b] text-xs font-semibold text-slate-300 flex items-center gap-1.5 self-start sm:self-auto"
-        >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Export All Reports (CSV)</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => fetchReports()}
+            className="px-3.5 py-1.5 rounded-lg bg-[#152033] hover:bg-[#1e293b] border border-[#1e293b] hover:border-sky-500/50 text-xs font-semibold text-slate-300 flex items-center gap-1.5 transition-all"
+            title="Refresh reports directly from PostgreSQL"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${loading ? 'animate-spin' : ''}`} />
+            <span>Sync DB</span>
+          </button>
+          <button
+            onClick={exportCSV}
+            className="px-3.5 py-1.5 rounded-lg bg-[#152033] hover:bg-[#1e293b] border border-[#1e293b] text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Export All Reports (CSV)</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
@@ -122,11 +137,10 @@ export const ReportsExplorer: React.FC = () => {
 
         <button
           onClick={() => setMediaOnlyFilter(!mediaOnlyFilter)}
-          className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all border whitespace-nowrap ${
-            mediaOnlyFilter
+          className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all border whitespace-nowrap ${mediaOnlyFilter
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
               : 'bg-[#0e1626] text-slate-300 border-[#1e293b] hover:border-slate-600'
-          }`}
+            }`}
         >
           <Camera className="w-3.5 h-3.5 text-amber-400" />
           <span>Visual Media Only</span>
@@ -154,13 +168,12 @@ export const ReportsExplorer: React.FC = () => {
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="font-mono text-xs font-bold text-sky-400">{rep.id}</span>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
-                      rep.verification_status === 'VERIFIED'
+                    className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${rep.verification_status === 'VERIFIED'
                         ? 'bg-emerald-500/20 text-emerald-300'
                         : rep.verification_status === 'SUSPICIOUS'
-                        ? 'bg-red-500/20 text-red-300'
-                        : 'bg-amber-500/20 text-amber-300'
-                    }`}
+                          ? 'bg-red-500/20 text-red-300'
+                          : 'bg-amber-500/20 text-amber-300'
+                      }`}
                   >
                     {rep.verification_status}
                   </span>

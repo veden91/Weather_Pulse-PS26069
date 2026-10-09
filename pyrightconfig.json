@@ -1,0 +1,8 @@
+{
+  "reportMissingImports": "none",
+  "extraPaths": [
+    "backend",
+    "./backend",
+    "."
+  ]
+}

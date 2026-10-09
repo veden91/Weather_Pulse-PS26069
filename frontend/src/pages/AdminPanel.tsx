@@ -180,11 +180,10 @@ export const AdminPanel: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div
             onClick={() => { setTimeFilter('JUST_INGESTED'); setEvidenceFilter('ALL'); }}
-            className={`p-3 rounded-xl border cursor-pointer transition-all ${
-              timeFilter === 'JUST_INGESTED'
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${timeFilter === 'JUST_INGESTED'
                 ? 'bg-emerald-950/40 border-emerald-500/60 ring-1 ring-emerald-500/40'
                 : 'bg-[#0e1626] border-[#1e293b] hover:border-slate-600'
-            }`}
+              }`}
           >
             <div className="text-[10px] text-emerald-400 uppercase font-bold flex items-center justify-between">
               <span>⚡ Just Ingested</span>
@@ -198,11 +197,10 @@ export const AdminPanel: React.FC = () => {
 
           <div
             onClick={() => { setTimeFilter('LAST_1H'); setEvidenceFilter('ALL'); }}
-            className={`p-3 rounded-xl border cursor-pointer transition-all ${
-              timeFilter === 'LAST_1H'
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${timeFilter === 'LAST_1H'
                 ? 'bg-sky-950/40 border-sky-500/60 ring-1 ring-sky-500/40'
                 : 'bg-[#0e1626] border-[#1e293b] hover:border-slate-600'
-            }`}
+              }`}
           >
             <div className="text-[10px] text-sky-400 uppercase font-bold flex items-center justify-between">
               <span>🕒 Last 1 Hour</span>
@@ -216,11 +214,10 @@ export const AdminPanel: React.FC = () => {
 
           <div
             onClick={() => { setTimeFilter('TODAY'); setEvidenceFilter('ALL'); }}
-            className={`p-3 rounded-xl border cursor-pointer transition-all ${
-              timeFilter === 'TODAY'
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${timeFilter === 'TODAY'
                 ? 'bg-indigo-950/40 border-indigo-500/60 ring-1 ring-indigo-500/40'
                 : 'bg-[#0e1626] border-[#1e293b] hover:border-slate-600'
-            }`}
+              }`}
           >
             <div className="text-[10px] text-indigo-400 uppercase font-bold flex items-center justify-between">
               <span>📅 Ingested Today</span>
@@ -234,11 +231,10 @@ export const AdminPanel: React.FC = () => {
 
           <div
             onClick={() => setEvidenceFilter(evidenceFilter === 'WITH_MEDIA' ? 'ALL' : 'WITH_MEDIA')}
-            className={`p-3 rounded-xl border cursor-pointer transition-all ${
-              evidenceFilter === 'WITH_MEDIA'
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${evidenceFilter === 'WITH_MEDIA'
                 ? 'bg-amber-950/50 border-amber-500/70 ring-1 ring-amber-500/50'
                 : 'bg-[#0e1626] border-[#1e293b] hover:border-slate-600'
-            }`}
+              }`}
           >
             <div className="text-[10px] text-amber-400 uppercase font-bold flex items-center justify-between">
               <span>📷 Visual Media</span>
@@ -252,11 +248,10 @@ export const AdminPanel: React.FC = () => {
 
           <div
             onClick={() => { setTimeFilter('ALL'); setEvidenceFilter('ALL'); }}
-            className={`p-3 rounded-xl border cursor-pointer transition-all ${
-              timeFilter === 'ALL' && evidenceFilter === 'ALL'
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${timeFilter === 'ALL' && evidenceFilter === 'ALL'
                 ? 'bg-purple-950/40 border-purple-500/60 ring-1 ring-purple-500/40'
                 : 'bg-[#0e1626] border-[#1e293b] hover:border-slate-600'
-            }`}
+              }`}
           >
             <div className="text-[10px] text-purple-400 uppercase font-bold flex items-center justify-between">
               <span>📜 Total Log</span>
@@ -363,12 +358,11 @@ export const AdminPanel: React.FC = () => {
 
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-200">{report.event_category}</div>
-                        <span className={`inline-block text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${
-                          report.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-300' :
-                          report.severity === 'HIGH' ? 'bg-amber-500/20 text-amber-300' :
-                          report.severity === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-300' :
-                          'bg-sky-500/20 text-sky-300'
-                        }`}>
+                        <span className={`inline-block text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${report.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-300' :
+                            report.severity === 'HIGH' ? 'bg-amber-500/20 text-amber-300' :
+                              report.severity === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-300' :
+                                'bg-sky-500/20 text-sky-300'
+                          }`}>
                           {report.severity}
                         </span>
                       </td>
@@ -416,13 +410,12 @@ export const AdminPanel: React.FC = () => {
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                          report.verification_status === 'VERIFIED'
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${report.verification_status === 'VERIFIED'
                             ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                             : report.verification_status === 'PENDING'
-                            ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                            : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                        }`}>
+                              ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                              : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                          }`}>
                           {report.verification_status}
                         </span>
                       </td>
@@ -460,15 +453,14 @@ export const AdminPanel: React.FC = () => {
                 <td className="py-3 px-4 font-bold text-slate-200">{u.name}</td>
                 <td className="py-3 px-4">
                   <span
-                    className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
-                      u.role === 'ADMIN'
+                    className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${u.role === 'ADMIN'
                         ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                         : u.role === 'ANALYST'
-                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                        : u.role === 'VERIFIER'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-slate-700/50 text-slate-300'
-                    }`}
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : u.role === 'VERIFIER'
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-slate-700/50 text-slate-300'
+                      }`}
                   >
                     {u.role}
                   </span>
@@ -476,13 +468,12 @@ export const AdminPanel: React.FC = () => {
                 <td className="py-3 px-4 text-slate-300">{u.dept}</td>
                 <td className="py-3 px-4 font-mono text-slate-400">{u.email}</td>
                 <td className="py-3 px-4">
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                    u.status === 'ACTIVE'
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${u.status === 'ACTIVE'
                       ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                       : u.status === 'PENDING'
-                      ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                      : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                  }`}>
+                        ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                        : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                    }`}>
                     {u.status}
                   </span>
                 </td>
@@ -646,13 +637,12 @@ export const AdminPanel: React.FC = () => {
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className={`px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-3 backdrop-blur-md ${
-            toastMsg.type === 'loading'
+          <div className={`px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-3 backdrop-blur-md ${toastMsg.type === 'loading'
               ? 'bg-indigo-900/80 border-indigo-500/50 text-indigo-100'
               : toastMsg.type === 'success'
-              ? 'bg-emerald-900/80 border-emerald-500/50 text-emerald-100'
-              : 'bg-rose-900/80 border-rose-500/50 text-rose-100'
-          }`}>
+                ? 'bg-emerald-900/80 border-emerald-500/50 text-emerald-100'
+                : 'bg-rose-900/80 border-rose-500/50 text-rose-100'
+            }`}>
             {toastMsg.type === 'loading' && <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />}
             <span className="text-sm font-medium">{toastMsg.text}</span>
           </div>
