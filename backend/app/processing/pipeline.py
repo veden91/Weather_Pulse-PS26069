@@ -103,10 +103,9 @@ def process_raw_report(
         has_gps=(provided_lat is not None)
     )
     trust_score = trust_result["trust_score"]
-    verification_status = "PENDING"
-    if trust_score >= 85:
-        verification_status = "VERIFIED"
-    elif trust_score < 55:
+    if trust_score >= 40:
+        verification_status = "ACCEPTED"
+    else:
         verification_status = "SUSPICIOUS"
 
     # Stage 8: Event Aggregation
@@ -119,7 +118,7 @@ def process_raw_report(
         severities_order = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
         if severities_order.index(severity) > severities_order.index(event.severity):
             event.severity = severity
-        if verification_status == "VERIFIED" and event.verification_status == "PENDING":
+        if verification_status in ["ACCEPTED", "VERIFIED"] and event.verification_status == "PENDING":
             event.verification_status = "VERIFIED"
     else:
         # Create a new Event cluster

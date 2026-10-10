@@ -62,6 +62,22 @@ export const getReportById = async (id: string): Promise<WeatherReport> => {
   return res.data;
 };
 
+export const acceptReport = async (id: string): Promise<any> => {
+  const res = await api.post(`/reports/${id}/accept`);
+  return res.data;
+};
+
+export const markReportSuspicious = async (id: string): Promise<any> => {
+  const res = await api.post(`/reports/${id}/suspicious`);
+  return res.data;
+};
+
+export const autoGovernReports = async (params?: { good_threshold?: number; suspicious_threshold?: number }): Promise<any> => {
+  const queryParams = { good_threshold: 40, suspicious_threshold: 40, ...params };
+  const res = await api.post('/reports/auto-govern', null, { params: queryParams });
+  return res.data;
+};
+
 export const submitCitizenReport = async (data: {
   event_category: string;
   description: string;

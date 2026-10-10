@@ -34,3 +34,11 @@ class Report(Base):
     media = relationship("Media", back_populates="report", cascade="all, delete-orphan")
     ai_prediction = relationship("AIPrediction", back_populates="report", uselist=False, cascade="all, delete-orphan")
     verification_records = relationship("VerificationRecord", back_populates="report", cascade="all, delete-orphan")
+
+    @property
+    def ai_reasoning(self):
+        return self.ai_prediction.reasoning_summary if self.ai_prediction else None
+
+    @property
+    def ai_model_name(self):
+        return self.ai_prediction.model_name if self.ai_prediction else "WeatherPulse-Ensemble-v1"

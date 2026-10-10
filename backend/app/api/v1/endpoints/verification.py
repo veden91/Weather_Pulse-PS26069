@@ -78,13 +78,13 @@ def execute_verification_action(
     prev_status = report.verification_status
     new_status = prev_status
 
-    if action == "VERIFY":
-        new_status = "VERIFIED"
+    if action in ["VERIFY", "ACCEPT"]:
+        new_status = "ACCEPTED" if action == "ACCEPT" else "VERIFIED"
         report.trust_score = max(report.trust_score, 95)
     elif action == "REJECT":
         new_status = "REJECTED"
         report.trust_score = min(report.trust_score, 20)
-    elif action == "MARK_SUSPICIOUS":
+    elif action in ["MARK_SUSPICIOUS", "SUSPICIOUS"]:
         new_status = "SUSPICIOUS"
         report.trust_score = min(report.trust_score, 35)
     elif action == "REQUEST_REVIEW":

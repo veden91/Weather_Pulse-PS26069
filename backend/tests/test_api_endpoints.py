@@ -91,3 +91,32 @@ def test_citizen_report_submission():
     assert res["status"] == "REPORT_RECEIVED"
     assert "report_id" in res
     assert "event_id" in res
+
+def test_admin_ingestion_governance_endpoints():
+    # 1. Fetch an existing report
+    rep_res = client.get("/api/v1/reports?limit=5")
+    assert rep_res.status_code == 200
+    reports = rep_res.json()
+    assert len(reports) > 0
+    target_id = reports[0]["id"]
+
+    # 2. Test Mark Accepted endpoint
+    accept_res = client.post(f"/api/v1/reports/{target_id}/accept")
+    assert accept_res.status_code == 200
+    assert accept_res.json()["verification_status"] == "ACCEPTED"
+    assert accept_res.json()["trust_score"] >= 90
+
+    # 3. Test Mark Suspicious endpoint
+    susp_res = client.post(f"/api/v1/reports/{target_id}/suspicious")
+    assert susp_res.status_code == 200
+    assert susp_res.json()["verification_status"] == "SUSPICIOUS"
+    assert susp_res.json()["trust_score"] < 40
+
+    # 4. Test Auto-Governance batch rule (score >= 40 accepted, < 40 suspicious)
+    gov_res = client.post("/api/v1/reports/auto-govern?good_threshold=40&suspicious_threshold=40")
+    assert gov_res.status_code == 200
+    data = gov_res.json()
+    assert data["status"] == "SUCCESS"
+    assert "accepted_count" in data
+    assert "suspicious_count" in data
+    assert data["total_evaluated"] > 0

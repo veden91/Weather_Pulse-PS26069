@@ -69,16 +69,13 @@ def calculate_trust_score(
     total_score = int(round(source_points + ai_points + media_points + gps_points + corrob_points))
     total_score = max(0, min(100, total_score))
 
-    # Determine confidence label
-    if total_score >= 85:
+    # Determine confidence label: score >= 40 is Accepted, score < 40 is Suspicious
+    if total_score >= 40:
         label = "Verified"
-        reason = "High precision report with authoritative telemetry and confirmed geo-parameters."
-    elif total_score >= 55:
-        label = "Needs Review"
-        reason = "Moderate credibility report; pending additional cross-source confirmation."
+        reason = "Report trust score >= 40 based on pre-trained model and deterministic 5-factor scoring; marked Accepted."
     else:
         label = "Suspicious"
-        reason = "Low trust score (< 55) or contradictory metadata detected; classified as Suspicious."
+        reason = "Least trust score (< 40) or contradictory metadata detected; classified as Suspicious."
 
     return {
         "trust_score": total_score,

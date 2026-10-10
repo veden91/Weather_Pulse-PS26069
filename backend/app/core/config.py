@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     TWITTER_BEARER_TOKEN: str | None = None
     TOMORROW_API_KEY: str | None = None
     OPEN_METEO_API_URL: str | None = "https://api.open-meteo.com/v1/forecast"
+    TINYFISH_API_KEY: str | None = None
 
     @property
     def live_collector_enabled(self) -> bool:

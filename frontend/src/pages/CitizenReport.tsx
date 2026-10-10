@@ -12,7 +12,9 @@ import {
   ShieldCheck,
   RotateCcw,
   Upload,
-  X
+  X,
+  ExternalLink,
+  Globe
 } from 'lucide-react';
 
 const EVENT_CATEGORIES = [
@@ -438,13 +440,68 @@ export const CitizenReport: React.FC = () => {
                 {Math.round(receipt.confidence * 100)}%
               </span>
             </div>
-            <div className="flex justify-between py-1">
+            <div className={`flex justify-between py-1 ${receipt.trust_score ? (isCitizen ? 'border-b border-zinc-800' : 'border-b border-[#1e293b]') : ''}`}>
               <span className={isCitizen ? 'text-zinc-400' : 'text-slate-400'}>Verification Cell Status:</span>
               <span className="font-mono font-bold text-amber-400">
                 {receipt.verification_status}
               </span>
             </div>
+            {receipt.trust_score && (
+              <div className="flex justify-between py-1">
+                <span className={isCitizen ? 'text-zinc-400' : 'text-slate-400'}>Multi-Factor Trust Score:</span>
+                <span className={`font-mono font-bold ${receipt.trust_score >= 80 ? 'text-emerald-400' : 'text-sky-400'}`}>
+                  {receipt.trust_score} / 100 {receipt.trust_score >= 85 ? '(Auto-Verified)' : ''}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* Section: TinyFish Live Web Corroboration */}
+          {receipt.citations && receipt.citations.length > 0 && (
+            <div className={`p-4 rounded-xl border space-y-2.5 ${
+              isCitizen ? 'bg-zinc-950/80 border-zinc-800' : 'bg-[#0b1324] border-sky-500/30'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                    <Globe className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-200">
+                    TinyFish Live Web Corroboration
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  {receipt.citations.length} Sources Confirmed
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Autonomous AI search detected matching real-time news bulletins and meteorological advisories in this area:
+              </p>
+              <div className="space-y-1.5 pt-1">
+                {receipt.citations.map((c: any, idx: number) => (
+                  <a
+                    key={idx}
+                    href={c.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block p-2 rounded-lg bg-[#0e1626]/80 hover:bg-[#15233d] border border-slate-800/80 hover:border-sky-500/40 transition-colors group text-left"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-200 group-hover:text-sky-300 line-clamp-1">
+                        {c.title}
+                      </span>
+                      <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-400 shrink-0 mt-0.5" />
+                    </div>
+                    {c.snippet && (
+                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-normal">
+                        {c.snippet}
+                      </p>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="pt-2 flex justify-center">
             <button

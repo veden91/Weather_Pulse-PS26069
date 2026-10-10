@@ -1,5 +1,5 @@
 export type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'SUSPICIOUS' | 'NEEDS_REVIEW';
+export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'ACCEPTED' | 'REJECTED' | 'SUSPICIOUS' | 'NEEDS_REVIEW';
 
 export interface WeatherEvent {
   id: string;

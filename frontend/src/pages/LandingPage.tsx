@@ -1,24 +1,19 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth, ROLE_CONFIGS } from '../store/authContext';
 import { PublicHeader } from '../components/PublicHeader';
 import {
   ShieldAlert,
   Twitter,
   Github,
   Mail,
-  MapPin
+  MapPin,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
-  const { isAuthenticated, role, getDefaultRoute } = useAuth();
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-sky-500 selection:text-white flex flex-col relative overflow-x-hidden">
       {/* Background Image */}
       <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-70 pointer-events-none"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-80 pointer-events-none"
         style={{ backgroundImage: "url('/india-weather-bg.png')" }}
       />
 

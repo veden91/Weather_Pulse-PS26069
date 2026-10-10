@@ -49,6 +49,8 @@ class ReportResponse(BaseModel):
     ingested_at: datetime
     processing_status: str
     media: List[MediaResponse] = []
+    ai_reasoning: Optional[str] = None
+    ai_model_name: Optional[str] = None
 
     class Config:
         from_attributes = True
