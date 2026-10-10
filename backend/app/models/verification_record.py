@@ -8,8 +8,8 @@ class VerificationRecord(Base):
     __tablename__ = "verification_records"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    report_id = Column(String(50), ForeignKey("reports.id"), nullable=True, index=True)
-    event_id = Column(String(50), ForeignKey("events.id"), nullable=True, index=True)
+    report_id = Column(String(50), ForeignKey("reports.id", ondelete="CASCADE"), nullable=True, index=True)
+    event_id = Column(String(50), ForeignKey("events.id", ondelete="SET NULL"), nullable=True, index=True)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=True) # Admin or Verifier
     
     action = Column(String(50), nullable=False) # VERIFY, REJECT, MARK_SUSPICIOUS, REQUEST_REVIEW, ESCALATE

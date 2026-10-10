@@ -16,7 +16,8 @@ import {
   Activity,
   ArrowUpRight,
   TrendingUp,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 
 export const CommandCenter: React.FC = () => {
@@ -57,6 +58,10 @@ export const CommandCenter: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(() => {
+      fetchData();
+    }, 15000); // Auto-refresh telemetry & events from PostgreSQL every 15s
+    return () => clearInterval(interval);
   }, []);
 
   // Update dynamic counters and map markers when live simulation arrives
@@ -91,6 +96,16 @@ export const CommandCenter: React.FC = () => {
           <p className="text-xs text-slate-400 mt-0.5">
             Real-time geospatial meteorological intelligence & multi-source telemetry across India.
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchData()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0e1626] border border-[#1e293b] hover:border-sky-500/50 text-slate-300 hover:text-sky-300 text-xs font-mono transition-all shadow-sm"
+            title="Force refresh data directly from PostgreSQL"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${loading ? 'animate-spin' : ''}`} />
+            <span>Sync DB</span>
+          </button>
         </div>
       </div>
 
@@ -200,37 +215,14 @@ export const CommandCenter: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Map Column (8 Cols) */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="flex items-center justify-between bg-[#121b2d] px-4 py-2.5 rounded-t-xl border border-[#1e293b]">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                National Weather GIS Telemetry Map
-              </span>
-              <span className="text-xs text-slate-400 font-mono">({events.length} Active Events)</span>
-            </div>
-            <button
-              onClick={() => navigate('/map')}
-              className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
-            >
-              <span>Full-Screen GIS Workspace</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
 
-          <IndiaWeatherMap
-            events={events}
-            selectedEventId={selectedEvent?.id}
-            onSelectEvent={(evt) => setSelectedEvent(evt)}
-            height="500px"
-          />
-
-          {/* Section 19: Live Event Stream Feed */}
+          {/* Section 19: Live Event Stream Feed — shown ABOVE the map */}
           <div className="bg-[#121b2d] p-4 rounded-xl border border-[#1e293b]">
             <div className="flex items-center justify-between mb-3 border-b border-[#1e293b] pb-2">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-sky-400 animate-pulse" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                  Live Event Stream (WebSockets)
+                  Live Ingestion Feed — Notification Reports
                 </h3>
               </div>
               <span className="text-[10px] text-emerald-400 font-mono font-bold">
@@ -275,6 +267,31 @@ export const CommandCenter: React.FC = () => {
               })()}
             </div>
           </div>
+
+          {/* Map Header + Map — now below the notification feed */}
+          <div className="flex items-center justify-between bg-[#121b2d] px-4 py-2.5 rounded-t-xl border border-[#1e293b]">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                National Weather GIS Telemetry Map
+              </span>
+              <span className="text-xs text-slate-400 font-mono">({events.length} Active Events)</span>
+            </div>
+            <button
+              onClick={() => navigate('/map')}
+              className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
+            >
+              <span>Full-Screen GIS Workspace</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <IndiaWeatherMap
+            events={events}
+            selectedEventId={selectedEvent?.id}
+            onSelectEvent={(evt) => setSelectedEvent(evt)}
+            height="500px"
+          />
         </div>
 
         {/* Right Intelligence Panel (4 Cols) */}

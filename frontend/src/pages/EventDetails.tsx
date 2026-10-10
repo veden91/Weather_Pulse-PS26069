@@ -13,7 +13,9 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   XCircle,
-  ExternalLink
+  ExternalLink,
+  Camera,
+  Video
 } from 'lucide-react';
 
 export const EventDetails: React.FC = () => {
@@ -191,6 +193,48 @@ export const EventDetails: React.FC = () => {
                 </span>
               </div>
               <p className={`text-xs ${isCitizen ? 'text-zinc-200' : 'text-slate-200'}`}>{rep.text}</p>
+
+              {/* Attached Media for Corroborating Report */}
+              {rep.media && rep.media.length > 0 && (
+                <div className="mt-3 pt-2.5 border-t border-[#1e293b]/70 space-y-2">
+                  <div className="text-[10px] uppercase font-semibold flex items-center gap-1.5 text-sky-400">
+                    <Camera className="w-3 h-3 text-sky-400" />
+                    <span>Visual Evidence ({rep.media.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {rep.media.map((item: any, mIdx: number) => (
+                      <div key={mIdx} className="rounded-lg overflow-hidden border border-[#1e293b] bg-black/60 relative group">
+                        {item.media_type === 'VIDEO' || item.media_url?.startsWith('data:video') || item.media_url?.match(/\.(mp4|webm|mov)($|\?)/i) ? (
+                          <div className="space-y-1">
+                            <video src={item.media_url} controls className="w-full h-32 object-cover bg-black rounded-t-lg" />
+                            <div className="p-1 text-[10px] text-slate-300 font-mono bg-[#0b111e] flex items-center justify-between">
+                              <span className="flex items-center gap-1 text-emerald-400">
+                                <Video className="w-3 h-3" /> Video
+                              </span>
+                              <a href={item.media_url} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
+                                Full view
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <a href={item.media_url} target="_blank" rel="noreferrer" className="block relative">
+                            <img src={item.media_url} alt={item.caption || "Report photo"} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 text-[9px] font-mono text-white flex items-center gap-0.5">
+                              <ExternalLink className="w-2.5 h-2.5" /> Full
+                            </div>
+                            {item.caption && (
+                              <p className="p-1 text-[10px] text-slate-300 font-sans truncate bg-[#0b111e]">
+                                {item.caption}
+                              </p>
+                            )}
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className={`mt-3 flex items-center justify-between text-[11px] pt-2 border-t ${isCitizen ? 'border-zinc-800 text-zinc-400' : 'border-[#1e293b] text-slate-400'}`}>
                 <span>Trust Score: <strong className="text-emerald-400">{rep.trust_score}/100</strong></span>
                 <span className="font-mono">{new Date(rep.reported_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PublicHeader } from '../components/PublicHeader';
 import { getEvents } from '../services/api';
 import { WeatherEvent } from '../types';
 import { IndiaWeatherMap } from '../maps/IndiaWeatherMap';
 import {
   Map,
-  Radio,
-  ExternalLink,
-  Layers
+  Radio
 } from 'lucide-react';
 
 const FALLBACK_EVENTS: WeatherEvent[] = [
@@ -138,7 +135,7 @@ export const PublicGeoAnalytics: React.FC = () => {
   const [events, setEvents] = useState<WeatherEvent[]>(FALLBACK_EVENTS);
   const [selectedMapEvent, setSelectedMapEvent] = useState<WeatherEvent | null>(FALLBACK_EVENTS[0]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+
 
   useEffect(() => {
     let isSubscribed = true;
@@ -186,9 +183,6 @@ export const PublicGeoAnalytics: React.FC = () => {
               <Map className="w-5 h-5 text-emerald-400" />
               <span>India Geo-Analytics GIS Map</span>
             </h1>
-            <p className="text-xs text-slate-400">
-              Interactive multi-layered GIS workspace centered on India with live satellite precipitation radar overlays.
-            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -263,15 +257,7 @@ export const PublicGeoAnalytics: React.FC = () => {
               </div>
             )}
 
-            <div className="pt-4 border-t border-[#1e293b]">
-              <button
-                onClick={() => navigate('/login')}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                <span>Access Full Operational GIS Portal</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
-            </div>
+
           </div>
         </div>
       </main>

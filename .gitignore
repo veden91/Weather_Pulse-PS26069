@@ -36,3 +36,4 @@ frontend/vite.config.ts.timestamp*
 
 # Misc
 back_code.md
+/app

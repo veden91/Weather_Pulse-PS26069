@@ -36,11 +36,10 @@ export const PublicHeader: React.FC<{ activePage?: 'events' | 'alerts' | 'map' |
         <nav className="flex items-center gap-1.5 sm:gap-3 overflow-x-auto py-1">
           <button
             onClick={() => navigate('/events')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap group ${
-              activePage === 'events'
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap group ${activePage === 'events'
                 ? 'bg-transparent text-sky-400 border-2 border-sky-400'
                 : 'bg-transparent text-slate-300 hover:text-sky-400 border-2 border-transparent'
-            }`}
+              }`}
           >
             <CloudRain className="w-3.5 h-3.5 text-sky-400 group-hover:animate-bounce shrink-0" />
             <span>Live Events</span>
@@ -48,11 +47,10 @@ export const PublicHeader: React.FC<{ activePage?: 'events' | 'alerts' | 'map' |
 
           <button
             onClick={() => navigate('/alerts')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap group ${
-              activePage === 'alerts'
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap group ${activePage === 'alerts'
                 ? 'bg-transparent text-amber-400 border-2 border-amber-400'
                 : 'bg-transparent text-slate-300 hover:text-amber-400 border-2 border-transparent'
-            }`}
+              }`}
           >
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400 group-hover:animate-pulse shrink-0" />
             <span>Alert Center</span>
@@ -60,11 +58,10 @@ export const PublicHeader: React.FC<{ activePage?: 'events' | 'alerts' | 'map' |
 
           <button
             onClick={() => navigate('/map')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap group ${
-              activePage === 'map'
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap group ${activePage === 'map'
                 ? 'bg-transparent text-emerald-400 border-2 border-emerald-400'
                 : 'bg-transparent text-slate-300 hover:text-emerald-400 border-2 border-transparent'
-            }`}
+              }`}
           >
             <Map className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
             <span>India Geo-Analytics</span>

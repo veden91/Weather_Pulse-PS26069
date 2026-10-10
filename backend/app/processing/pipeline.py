@@ -212,15 +212,16 @@ def process_raw_report(
     photo_url = raw_data.get("photo_url")
     video_url = raw_data.get("video_url")
     if photo_url:
+        is_vid = photo_url.startswith("data:video") or any(photo_url.lower().endswith(ext) for ext in [".mp4", ".webm", ".mov", ".ogg"])
         media = Media(
             report_id=report.id,
-            media_type="IMAGE",
+            media_type="VIDEO" if is_vid else "IMAGE",
             media_url=photo_url,
-            thumbnail_url=photo_url,
-            caption="Geotagged citizen weather observation"
+            thumbnail_url=None if is_vid else photo_url,
+            caption="Citizen weather video capture" if is_vid else "Geotagged citizen weather observation"
         )
         db.add(media)
-    elif video_url:
+    if video_url:
         media = Media(
             report_id=report.id,
             media_type="VIDEO",

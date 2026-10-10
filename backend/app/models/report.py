@@ -8,7 +8,7 @@ class Report(Base):
 
     id = Column(String(50), primary_key=True) # e.g. "REP-2026-001283"
     source_id = Column(String(50), ForeignKey("sources.id"), nullable=False)
-    event_id = Column(String(50), ForeignKey("events.id"), nullable=True)
+    event_id = Column(String(50), ForeignKey("events.id", ondelete="SET NULL"), nullable=True)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
 
     text = Column(Text, nullable=False)
